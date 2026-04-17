@@ -1,0 +1,637 @@
+.aprovacoes-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--blue-50) 0%, var(--white) 50%, var(--blue-100) 100%);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-1);
+}
+
+.page-header {
+  background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-700) 100%);
+  color: var(--white);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--blue-500);
+  position: relative;
+}
+
+.page-header .back-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.page-header .back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.page-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0;
+  color: var(--white);
+}
+
+/* Header styles moved to App.css to avoid conflicts */
+
+.search-container {
+  background: linear-gradient(135deg, var(--white) 0%, var(--blue-50) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--blue-200);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--blue-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--white);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--white) 0%, var(--blue-50) 100%);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--blue-200);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue-500), var(--blue-600));
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  background: linear-gradient(135deg, var(--blue-50) 0%, var(--blue-100) 100%);
+  border-color: var(--blue-300);
+}
+
+.stat-card.pending {
+  border-left: 4px solid var(--warning);
+}
+
+.stat-card.approved {
+  border-left: 4px solid var(--success);
+}
+
+.stat-card.rejected {
+  border-left: 4px solid var(--danger);
+}
+
+.stat-icon {
+  font-size: var(--font-size-xl);
+  opacity: 0.8;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.section {
+  background: linear-gradient(135deg, var(--white) 0%, var(--blue-50) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--blue-200);
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--blue-500), var(--blue-600), var(--blue-500));
+}
+
+.section h2 {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%);
+  border-bottom: 1px solid var(--blue-300);
+  color: var(--blue-800);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.users-table {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--blue-200);
+}
+
+.users-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.users-table th {
+  background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-200) 100%);
+  font-weight: 600;
+  color: var(--blue-800);
+  letter-spacing: 0.025em;
+  font-size: var(--font-size-xs);
+}
+
+.users-table tr:hover {
+  background: var(--blue-50);
+}
+
+/* User info styles moved to App.css to avoid conflicts */
+
+.user-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-email {
+  color: var(--text-muted);
+}
+
+.date-info {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.status-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn.approve {
+  background: var(--success);
+  color: white;
+}
+
+.action-btn.approve:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+.action-btn.reject {
+  background: var(--danger);
+  color: white;
+}
+
+.action-btn.reject:hover {
+  background: var(--danger-hover);
+  transform: scale(1.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.empty-state p {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(4px);
+}
+
+.modal-container {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+
+.modal-container.large {
+  max-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.modal-content {
+  padding: 2rem;
+}
+
+.user-summary {
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.user-summary h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.user-details p {
+  margin: 0.5rem 0;
+  color: var(--text-muted);
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-icon {
+  font-size: 1.25rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-select {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--ring);
+}
+
+.role-description {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  color: var(--brand);
+  font-size: 0.9rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.assignment-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.assignment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card);
+}
+
+.assignment-item:hover {
+  background: var(--bg-secondary);
+  border-color: var(--brand);
+}
+
+.assignment-checkbox {
+  margin: 0;
+}
+
+.assignment-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.cancel-button {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.approve-button {
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.approve-button:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.approve-button:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top: 4px solid var(--brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.access-denied {
+  text-align: center;
+  padding: 3rem;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.access-denied h2 {
+  color: var(--danger);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.access-denied p {
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  /* Header responsive styles moved to App.css */
+  
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .users-table {
+    font-size: 0.8rem;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .modal-container {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .assignment-list {
+    grid-template-columns: 1fr;
+  }
+}

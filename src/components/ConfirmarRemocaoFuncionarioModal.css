@@ -1,0 +1,265 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #e74c3c;
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: #f8f9fa;
+  color: #2c3e50;
+}
+
+.close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.warning-message {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+}
+
+.warning-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.warning-message h3 {
+  margin: 0 0 0.5rem 0;
+  color: #856404;
+  font-size: 1.2rem;
+}
+
+.warning-message p {
+  margin: 0;
+  color: #856404;
+  font-size: 1rem;
+}
+
+.funcionario-info {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.funcionario-info h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item label {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: fit-content;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.consequences-warning {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+}
+
+.consequences-warning h4 {
+  margin: 0 0 0.75rem 0;
+  color: #721c24;
+  font-size: 0.9rem;
+}
+
+.consequences-warning ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #721c24;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.consequences-warning li {
+  margin-bottom: 0.25rem;
+}
+
+.consequences-warning li:last-child {
+  margin-bottom: 0;
+}
+
+.consequences-warning strong {
+  font-weight: 600;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #f5c6cb;
+  font-size: 0.9rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.cancel-button, .confirm-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  background: #6c757d;
+  color: white;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.confirm-button {
+  background: #e74c3c;
+  color: white;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.cancel-button:disabled, .confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 0.5rem;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .cancel-button, .confirm-button {
+    width: 100%;
+  }
+}
+
+
+
+
+
+
+
+

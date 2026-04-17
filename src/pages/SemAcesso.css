@@ -1,0 +1,136 @@
+.sem-acesso-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.access-denied-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  text-align: center;
+  margin-top: 50px;
+}
+
+.access-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.access-denied-card h1 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 32px;
+}
+
+.admin-message,
+.generic-message {
+  margin-bottom: 30px;
+}
+
+.admin-message h2,
+.generic-message h2 {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.admin-message p,
+.generic-message p {
+  color: #666;
+  margin-bottom: 10px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+/* User info styles moved to App.css to avoid conflicts */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.info-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.logout-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .access-denied-card {
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .access-icon {
+    font-size: 48px;
+  }
+  
+  .access-denied-card h1 {
+    font-size: 24px;
+  }
+  
+  .admin-message h2,
+  .generic-message h2 {
+    font-size: 20px;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+

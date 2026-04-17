@@ -1,0 +1,421 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-modal);
+}
+
+.ver-ficha-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.edit-button,
+.save-button,
+.cancel-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button {
+  background: #3498db;
+  color: white;
+}
+
+.edit-button:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.save-button {
+  background: #27ae60;
+  color: white;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #229954;
+}
+
+.cancel-button {
+  background: #95a5a6;
+  color: white;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #7f8c8d;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover:not(:disabled) {
+  background-color: #ecf0f1;
+}
+
+.close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.material-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.material-name-section h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.material-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.status-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px dashed #ffc107;
+  position: relative;
+}
+
+.status-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 1px;
+  background-color: #ffc107;
+}
+
+.status-indicator span {
+  color: #495057;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.edit-form {
+  margin-top: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.edit-input {
+  padding: 0.75rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+  background: white;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.edit-input:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.material-name-input {
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 1rem;
+}
+
+.description-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.price-input-container {
+  position: relative;
+}
+
+.price-input {
+  padding-right: 2rem;
+}
+
+.currency-symbol {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7f8c8d;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.info-value {
+  color: #2c3e50;
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.description-value {
+  min-height: 80px;
+  align-items: flex-start;
+  white-space: pre-wrap;
+}
+
+.price-value {
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.stat-item label {
+  display: block;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stat-value.quantity {
+  color: #3498db;
+}
+
+.stat-value.value {
+  color: #27ae60;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.error-message {
+  background-color: #fdf2f2;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+  font-size: 0.9rem;
+}
+
+/* Reabastecimentos Section */
+.reabastecimentos-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #ecf0f1;
+}
+
+.reabastecimentos-section h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.reabastecimentos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reabastecimento-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.reabastecimento-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.type {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.quantity {
+  color: #3498db;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.unit-price {
+  color: #7f8c8d;
+  font-size: 0.85rem;
+}
+
+.total-price {
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.date {
+  color: #7f8c8d;
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ver-ficha-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .material-header-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .reabastecimento-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

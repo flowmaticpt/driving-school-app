@@ -1,0 +1,579 @@
+.backup-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.backup-back-button {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.backup-back-button:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.backup-back-button:active {
+  transform: translateY(0);
+}
+
+.backup-header {
+  margin-bottom: 2rem;
+}
+
+.backup-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.backup-header p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.backup-message {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.backup-message.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.backup-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.backup-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.backup-action-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.backup-action-card:hover {
+  border-color: #6366f1;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+.backup-action-card h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.75rem 0;
+}
+
+.backup-action-card p {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+}
+
+.backup-btn-primary,
+.backup-btn-secondary,
+.backup-btn-restore,
+.backup-btn-download,
+.backup-btn-delete,
+.backup-upload-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backup-btn-primary {
+  background: #6366f1;
+  color: white;
+  width: 100%;
+  justify-content: center;
+}
+
+.backup-btn-primary:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.backup-btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.backup-upload-btn {
+  background: #10b981;
+  color: white;
+  width: 100%;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.backup-upload-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.backup-upload-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.backup-btn-secondary {
+  background: #6366f1;
+  color: white;
+}
+
+.backup-btn-secondary:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.backup-btn-restore {
+  background: #3b82f6;
+  color: white;
+}
+
+.backup-btn-restore:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.backup-btn-download {
+  background: #10b981;
+  color: white;
+}
+
+.backup-btn-download:hover:not(:disabled) {
+  background: #059669;
+}
+
+.backup-btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.backup-btn-delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.backup-section {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.backup-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.auto-backup-config {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.backup-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+
+.backup-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #6366f1;
+}
+
+.backup-select-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.backup-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #111827;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backup-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.last-backup-info {
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.backups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.backup-item {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.backup-item:hover {
+  border-color: #d1d5db;
+  background: white;
+}
+
+.backup-item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.backup-item-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backup-item-date {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.backup-auto-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.backup-item-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.backup-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .backup-page {
+    padding: 1rem;
+  }
+
+  .backup-back-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .backup-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-item-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .backup-item-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .backup-btn-restore,
+  .backup-btn-download,
+  .backup-btn-delete {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Progress Modal */
+.backup-progress-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-popover);
+  padding: 1rem;
+  animation: backupFadeIn 0.3s ease;
+}
+
+@keyframes backupFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.backup-progress-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+  animation: backupSlideUp 0.3s ease;
+}
+
+@keyframes backupSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.backup-progress-modal h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.backup-progress-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.backup-progress-icon {
+  font-size: 3rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.backup-progress-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #6366f1;
+  text-align: center;
+}
+
+.backup-progress-steps {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.backup-progress-steps::-webkit-scrollbar {
+  width: 6px;
+}
+
+.backup-progress-steps::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.backup-progress-steps::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.backup-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+}
+
+.backup-progress-step.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.backup-progress-step.current {
+  background: #dbeafe;
+  color: #1e40af;
+  font-weight: 600;
+  animation: highlight 1.5s infinite;
+}
+
+@keyframes highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+}
+
+.backup-step-icon {
+  font-size: 1.25rem;
+  font-weight: bold;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.backup-progress-step.completed .backup-step-icon {
+  color: #059669;
+  animation: checkmark 0.3s ease;
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.backup-progress-step.current .backup-step-icon {
+  color: #2563eb;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.backup-step-text {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .backup-progress-modal {
+    padding: 1.5rem;
+    max-width: 90vw;
+  }
+
+  .backup-progress-modal h2 {
+    font-size: 1.25rem;
+  }
+
+  .backup-progress-icon {
+    font-size: 2.5rem;
+  }
+
+  .backup-progress-text {
+    font-size: 1rem;
+  }
+}
+

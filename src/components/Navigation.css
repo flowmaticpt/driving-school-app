@@ -1,0 +1,54 @@
+/* Modern Navigation Styles */
+.navigation {
+  margin-bottom: var(--space-8);
+}
+
+/* Header styles moved to App.css to avoid conflicts */
+
+.menu {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.back-button {
+  background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-700) 100%);
+  color: var(--white);
+  border: 1px solid var(--blue-700);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, var(--blue-700) 0%, var(--blue-800) 100%);
+  border-color: var(--blue-800);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .menu {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .back-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

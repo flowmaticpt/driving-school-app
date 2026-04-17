@@ -1,0 +1,140 @@
+.confirm-remove-modal {
+  width: 500px;
+  max-width: 90vw;
+}
+
+.confirm-remove-modal .modal-header h3 {
+  margin: 0;
+  color: #dc3545;
+  font-size: 1.2rem;
+}
+
+.warning-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.warning-message p {
+  margin: 0;
+  color: #856404;
+  font-weight: 500;
+}
+
+.prestacao-details {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.prestacao-details h4 {
+  margin: 0 0 0.75rem 0;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item .label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.detail-item .value {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.status-pendente {
+  color: #ffc107 !important;
+}
+
+.warning-note {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+.warning-note p {
+  margin: 0;
+  color: #721c24;
+  font-size: 0.9rem;
+}
+
+.confirm-remove-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.confirm-remove-modal .cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.confirm-remove-modal .cancel-button:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.confirm-remove-modal .confirm-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.confirm-remove-modal .confirm-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.confirm-remove-modal .confirm-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .confirm-remove-modal {
+    width: 95vw;
+  }
+  
+  .confirm-remove-modal .modal-footer {
+    flex-direction: column;
+  }
+  
+  .confirm-remove-modal .cancel-button,
+  .confirm-remove-modal .confirm-button {
+    width: 100%;
+  }
+}
+
+
+
+
+
+
+

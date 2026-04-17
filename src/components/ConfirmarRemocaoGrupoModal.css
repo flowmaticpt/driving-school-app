@@ -1,0 +1,143 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-modal);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #e74c3c;
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover:not(:disabled) {
+  background-color: #ecf0f1;
+}
+
+.close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.modal-body p {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.warning-list {
+  text-align: left;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.warning-list li {
+  margin-bottom: 0.5rem;
+}
+
+.error-message {
+  background-color: #fdf2f2;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  border: 1px solid #fecaca;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.cancel-button,
+.delete-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #7f8c8d;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #c0392b;
+}
+
+.delete-button:disabled,
+.cancel-button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}

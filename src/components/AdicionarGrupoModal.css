@@ -1,0 +1,255 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-modal);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover:not(:disabled) {
+  background-color: #ecf0f1;
+}
+
+.close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-form {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-group input[type="text"]:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.search-container {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.search-input:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.loading-escolas {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #ecf0f1;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-escolas p {
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.escolas-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.no-escolas {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 2rem;
+  margin: 0;
+}
+
+.escola-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 0.25rem;
+}
+
+.escola-item:hover {
+  background-color: #f8f9fa;
+}
+
+.escola-item input[type="checkbox"] {
+  margin-right: 0.75rem;
+  transform: scale(1.2);
+}
+
+.escola-name {
+  font-weight: 500;
+  color: #2c3e50;
+  flex: 1;
+}
+
+.escola-address {
+  color: #7f8c8d;
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
+}
+
+.selected-count {
+  background-color: #e8f5e8;
+  color: #27ae60;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #fdf2f2;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancel-button,
+.submit-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #7f8c8d;
+}
+
+.submit-button {
+  background-color: #9b59b6;
+  color: white;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #8e44ad;
+}
+
+.submit-button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.cancel-button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}

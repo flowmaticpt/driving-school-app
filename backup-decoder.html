@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup Decoder - Driving School App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 12px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .text-area {
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .decode-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .decode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .decode-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #c62828;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 Backup Decoder</h1>
+        <p class="subtitle">Decodificar ficheiros de backup do Driving School App</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Clique ou arraste o ficheiro de backup aqui</div>
+            <div class="upload-hint">Ficheiros .txt codificados em Base64</div>
+            <input type="file" id="fileInput" accept=".txt,.json">
+        </div>
+
+        <div class="text-area" id="textArea" style="display: none;">
+            <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                Conteúdo decodificado:
+            </label>
+            <textarea id="decodedContent" readonly></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="decode-btn" id="decodeBtn" disabled>Decodificar</button>
+            <button class="download-btn" id="downloadBtn" disabled>Descarregar JSON</button>
+        </div>
+
+        <div id="messageArea"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const textArea = document.getElementById('textArea');
+        const decodedContent = document.getElementById('decodedContent');
+        const decodeBtn = document.getElementById('decodeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const messageArea = document.getElementById('messageArea');
+
+        let decodedData = null;
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    let fileContent = e.target.result.trim();
+                    
+                    // Try to decode from Base64
+                    try {
+                        // Check if it looks like Base64 (no special JSON characters at start)
+                        if (!fileContent.startsWith('{')) {
+                            // Decode from Base64
+                            fileContent = decodeURIComponent(escape(atob(fileContent)));
+                        }
+                    } catch (decodeError) {
+                        // If Base64 decode fails, try parsing as plain JSON (backward compatibility)
+                        console.log('Tentando como JSON não codificado...');
+                    }
+                    
+                    // Try to parse as JSON
+                    decodedData = JSON.parse(fileContent);
+                    
+                    // Format JSON nicely
+                    decodedContent.value = JSON.stringify(decodedData, null, 2);
+                    
+                    // Show text area and enable buttons
+                    textArea.style.display = 'block';
+                    decodeBtn.disabled = false;
+                    downloadBtn.disabled = false;
+                    
+                    showMessage('success', 'Backup decodificado com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao decodificar:', error);
+                    showMessage('error', 'Erro ao decodificar o ficheiro. Verifique se é um ficheiro de backup válido codificado em Base64.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        decodeBtn.addEventListener('click', () => {
+            if (decodedData) {
+                // Re-format the JSON
+                decodedContent.value = JSON.stringify(decodedData, null, 2);
+                showMessage('success', 'Conteúdo formatado!');
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (decodedData) {
+                const jsonString = JSON.stringify(decodedData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup-decoded-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage('success', 'Ficheiro JSON descarregado com sucesso!');
+            }
+        });
+
+        function showMessage(type, text) {
+            messageArea.innerHTML = `<div class="${type}-box">${text}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+
+
