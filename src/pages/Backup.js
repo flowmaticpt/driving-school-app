@@ -501,9 +501,9 @@ const Backup = () => {
 
       // Step 6: Download file (Base64 encoded)
       updateProgress(steps[8]);
-      const jsonString = JSON.stringify(backupData, null, 2);
+      const jsonStringPretty = JSON.stringify(backupData, null, 2);
       // Encode to Base64 for simple encryption
-      const base64Encoded = btoa(unescape(encodeURIComponent(jsonString)));
+      const base64Encoded = btoa(unescape(encodeURIComponent(jsonStringPretty)));
       const blob = new Blob([base64Encoded], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

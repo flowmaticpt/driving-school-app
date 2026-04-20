@@ -7,6 +7,7 @@ import AdicionarMaterialModal from '../components/AdicionarMaterialModal';
 import ReabastecerMaterialModal from '../components/ReabastecerMaterialModal';
 import VerFichaMaterialModal from '../components/VerFichaMaterialModal';
 import ConfirmarRemocaoMaterialModal from '../components/ConfirmarRemocaoMaterialModal';
+import { formatPrice, formatDate } from '../utils/formatters';
 import './Inventario.css';
 
 const Inventario = () => {

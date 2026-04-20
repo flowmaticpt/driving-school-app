@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, getDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { formatPrice } from '../utils/formatters';
 import './VisaoFinanceira.css';
 
 const VisaoFinanceira = () => {

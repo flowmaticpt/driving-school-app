@@ -192,9 +192,6 @@ const Alunos = () => {
     setShowVerFichaModal(true);
   };
 
-  // Check if user is owner (only owner can delete students)
-  const isOwner = userData?.role === 'dono';
-
   const handleRemover = (aluno) => {
     // Only allow deletion if user is owner
     if (!isOwner) {

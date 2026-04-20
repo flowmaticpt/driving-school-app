@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebas
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import AdicionarDespesaModal from '../components/AdicionarDespesaModal';
+import { formatPrice, formatDate } from '../utils/formatters';
 import './Despesas.css';
 
 const Despesas = () => {
@@ -206,7 +207,7 @@ const Despesas = () => {
               const quantidadeTipo = filteredDespesas.filter(d => d.tipo === tipo.id).length;
               
               return (
-                <div key={tipo.id} className="tipo-card" style={{ '--tipo-cor': tipo.cor, borderColor: tipo.cor } as React.CSSProperties}>
+                <div key={tipo.id} className="tipo-card" style={{ '--tipo-cor': tipo.cor, borderColor: tipo.cor }}>
                   <div className="tipo-icon" style={{ color: tipo.cor }}>
                     {tipo.icon}
                   </div>

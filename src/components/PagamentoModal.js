@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { doc, updateDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { formatPrice } from '../utils/formatters';
