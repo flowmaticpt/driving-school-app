@@ -1634,14 +1634,32 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                             <>
                               {!isPagamento && (
                                 <div className="payment-method">
-                                  <span className="method-icon">
-                                    {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? '💵' :
-                                     (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? '💳' : '🏦'}
-                                  </span>
-                                  <span className="method-name">
-                                    {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? 'Dinheiro' :
-                                     (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? 'Multibanco' : 'Transferência'}
-                                  </span>
+                                  {/* Mostrar parcelas se existirem (pagamento com múltiplos métodos) */}
+                                  {Array.isArray(pagamento.parcelas) && pagamento.parcelas.length > 1 ? (
+                                    <div className="parcelas-display">
+                                      {pagamento.parcelas.map((parcela, pIdx) => {
+                                        const pMethod = parcela.method;
+                                        const pIcon = pMethod === 'dinheiro' ? '💵' : pMethod === 'multibanco' ? '💳' : '🏦';
+                                        const pName = pMethod === 'dinheiro' ? 'Dinheiro' : pMethod === 'multibanco' ? 'Multibanco' : 'Transferência';
+                                        return (
+                                          <span key={pIdx} className="parcela-badge">
+                                            {pIcon} {formatPrice(parcela.value)} {pName}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <span className="method-icon">
+                                        {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? '💵' :
+                                         (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? '💳' : '🏦'}
+                                      </span>
+                                      <span className="method-name">
+                                        {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? 'Dinheiro' :
+                                         (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? 'Multibanco' : 'Transferência'}
+                                      </span>
+                                    </>
+                                  )}
                         </div>
                               )}
                               

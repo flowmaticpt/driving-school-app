@@ -537,24 +537,133 @@ small {
   cursor: not-allowed;
 }
 
+/* --- Parcelas (pagamento parcial / múltiplos métodos) --- */
+.parcelas-section {
+  margin-bottom: 1.5rem;
+}
+
+.parcelas-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.parcela-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.parcela-method {
+  flex: 0 0 180px;
+}
+
+.parcela-value-wrap {
+  flex: 1;
+}
+
+.parcela-value {
+  width: 100%;
+}
+
+.parcela-remove {
+  flex: 0 0 32px;
+  height: 32px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.parcela-remove:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.parcela-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.parcela-add {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-top: 0.5rem;
+  background: none;
+  border: 2px dashed #27ae60;
+  border-radius: 8px;
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.parcela-add:hover:not(:disabled) {
+  background: #e8f5e8;
+  border-color: #219a52;
+}
+
+.parcela-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.parcelas-resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  margin-top: 0.75rem;
+  border-top: 2px solid #27ae60;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #2c3e50;
+}
+
+.parcelas-resumo .valor-excesso {
+  color: #dc3545;
+}
+
 /* Responsive para as etapas */
 @media (max-width: 768px) {
   .tipo-options {
     grid-template-columns: 1fr;
   }
-  
+
   .tipo-option {
     min-height: 150px;
     padding: 1.5rem 1rem;
   }
-  
+
   .etapa-header {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
-  
+
   .voltar-button {
     align-self: center;
+  }
+
+  .parcela-row {
+    flex-wrap: wrap;
+  }
+
+  .parcela-method {
+    flex: 1 1 100%;
+  }
+
+  .parcela-value-wrap {
+    flex: 1 1 calc(100% - 40px);
   }
 }

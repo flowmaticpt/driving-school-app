@@ -4,11 +4,17 @@ import { db } from '../firebase/config';
 import { formatPrice } from '../utils/formatters';
 import './PagamentoModal.css';
 
-const PagamentoModal = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  aluno, 
+const METODOS_PAGAMENTO = [
+  { value: 'dinheiro', label: '💵 Dinheiro' },
+  { value: 'transferencia', label: '🏦 Transferência' },
+  { value: 'multibanco', label: '💳 Multibanco' },
+];
+
+const PagamentoModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  aluno,
   escolaId,
   servicosAtivos = [],
   materiaisComprados = [],
@@ -16,14 +22,14 @@ const PagamentoModal = ({
 }) => {
   const [etapa, setEtapa] = useState(1); // 1: Escolher type, 2: Detalhes do pagamento
   const [typePagamento, setTipoPagamento] = useState(''); // 'pronto' ou 'prestacao'
-  const [paymentMethod, setMetodoPagamento] = useState('dinheiro');
-  const [valuePago, setValorPago] = useState('');
+  // Parcelas: array de {method, value} para pagamento parcial
+  const [parcelas, setParcelas] = useState([{ method: 'dinheiro', value: '' }]);
   const [paymentDate, setPaymentDate] = useState('');
   const [observations, setObservacoes] = useState('');
   const [naoAfetarFinanceiro, setNaoAfetarFinanceiro] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Campos específicos para pagamento por prestação
   const [dataMaximaPagamento, setDataMaximaPagamento] = useState('');
   const [valorPrestacao, setValorPrestacao] = useState('');
@@ -34,12 +40,12 @@ const PagamentoModal = ({
       const hoje = new Date();
       const dataFormatada = hoje.toISOString().split('T')[0];
       setPaymentDate(dataFormatada);
-      
+
       // Se há uma prestação selecionada, configurar automaticamente
       if (selectedInstallment) {
-        setTipoPagamento('pronto'); // Pagamento a pronto para prestação existente
-        setValorPago(selectedInstallment.value.toString());
-        setEtapa(2); // Ir direto para a etapa de detalhes
+        setTipoPagamento('pronto');
+        setParcelas([{ method: 'dinheiro', value: selectedInstallment.value.toString() }]);
+        setEtapa(2);
       }
     }
   }, [isOpen, selectedInstallment]);
@@ -60,27 +66,23 @@ const PagamentoModal = ({
   const totalPagamentos = useMemo(() => {
     return (aluno.pagamentos || []).reduce((total, pagamento) => {
       const tipo = pagamento.tipo || pagamento.type;
-      
-      // Pagamentos do tipo "pagamento" não têm "isPago", apenas "valor"
+
       if (tipo === 'pagamento' && pagamento.valor) {
         return total + parseFloat(pagamento.valor);
       }
-      
-      // Para pagamentos a pronto, sempre contar o valor (já estão pagos)
+
       if (tipo === 'pronto' && pagamento.value) {
         return total + parseFloat(pagamento.value);
       }
-      
-      // Para prestações, só contar se estiverem pagas
+
       if (tipo === 'prestacao' && pagamento.isPago === true) {
         return total + parseFloat(pagamento.valorPrestacao || pagamento.value || 0);
       }
-      
-      // Outros tipos: só contar se isPago é true
+
       if (pagamento.isPago === true && pagamento.value) {
         return total + parseFloat(pagamento.value);
       }
-      
+
       return total;
     }, 0);
   }, [aluno.pagamentos]);
@@ -89,44 +91,62 @@ const PagamentoModal = ({
     return (totalServicos + totalMateriais) - totalPagamentos;
   }, [totalServicos, totalMateriais, totalPagamentos]);
 
+  // Soma das parcelas actuais
+  const somaParcelas = useMemo(() => {
+    return parcelas.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0);
+  }, [parcelas]);
+
   // Funções wrapper para compatibilidade
   const calcularTotalServicos = () => totalServicos;
   const calcularTotalMateriais = () => totalMateriais;
-  const calcularTotalGeral = () => totalGeral;
 
   // Função para calcular dívida com pagamentos específicos (usada para atualizações)
   const calcularTotalGeralComPagamentos = (pagamentos) => {
-    const totalServicos = calcularTotalServicos();
-    const totalMateriais = calcularTotalMateriais();
+    const tServicos = calcularTotalServicos();
+    const tMateriais = calcularTotalMateriais();
 
-    const totalPagamentos = pagamentos.reduce((total, pagamento) => {
+    const tPagamentos = pagamentos.reduce((total, pagamento) => {
       const tipo = pagamento.tipo || pagamento.type;
-      
-      // Pagamentos do tipo "pagamento" não têm "isPago", apenas "valor"
+
       if (tipo === 'pagamento' && pagamento.valor) {
         return total + parseFloat(pagamento.valor);
       }
-      
+
       if (tipo === 'pronto' && pagamento.value) {
         return total + parseFloat(pagamento.value);
       }
-      
+
       if (tipo === 'prestacao' && pagamento.isPago === true) {
-        // Prestações só reduzem a dívida se estiverem pagas
         return total + parseFloat(pagamento.valorPrestacao || pagamento.value || 0);
       }
-      
-      // Outros tipos: só contar se isPago é true
+
       if (pagamento.isPago === true && pagamento.value) {
         return total + parseFloat(pagamento.value);
       }
-      
+
       return total;
     }, 0);
 
-    return (totalServicos + totalMateriais) - totalPagamentos;
+    return (tServicos + tMateriais) - tPagamentos;
   };
 
+  // --- Parcelas helpers ---
+  const handleParcelaChange = (index, field, val) => {
+    setParcelas(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: val };
+      return next;
+    });
+    setError('');
+  };
+
+  const handleAddParcela = () => {
+    setParcelas(prev => [...prev, { method: 'dinheiro', value: '' }]);
+  };
+
+  const handleRemoveParcela = (index) => {
+    setParcelas(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleEscolherTipo = (type) => {
     setTipoPagamento(type);
@@ -141,26 +161,44 @@ const PagamentoModal = ({
     setError('');
     setDataMaximaPagamento('');
     setValorPrestacao('');
+    setParcelas([{ method: 'dinheiro', value: '' }]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Para pagamentos a pronto, validar valor a pagar
+    // --- Validações para pagamento a pronto ---
     if (typePagamento === 'pronto') {
-      if (!valuePago || isNaN(parseFloat(valuePago)) || parseFloat(valuePago) <= 0) {
-        setError('Por favor, insira um valor válido');
+      // Validar que todas as parcelas têm valor > 0
+      for (let i = 0; i < parcelas.length; i++) {
+        const v = parseFloat(parcelas[i].value);
+        if (!parcelas[i].value || isNaN(v) || v <= 0) {
+          setError(`Parcela ${i + 1}: insira um valor válido`);
+          return;
+        }
+      }
+
+      // Validar soma
+      const soma = parcelas.reduce((s, p) => s + (parseFloat(p.value) || 0), 0);
+      const somaArredondada = Math.round(soma * 100) / 100;
+
+      if (somaArredondada <= 0) {
+        setError('O valor total deve ser superior a 0');
+        return;
+      }
+
+      if (somaArredondada > Math.round(totalGeral * 100) / 100) {
+        setError('O valor total não pode ser superior ao total em dívida');
+        return;
+      }
+
+      if (!paymentDate) {
+        setError('Por favor, selecione a data do pagamento');
         return;
       }
     }
 
-    // Para pagamentos a pronto, data do pagamento é obrigatória
-    if (typePagamento === 'pronto' && !paymentDate) {
-      setError('Por favor, selecione a data do pagamento');
-      return;
-    }
-
-    // Validações específicas para pagamento por prestação
+    // --- Validações para prestação ---
     if (typePagamento === 'prestacao') {
       if (!dataMaximaPagamento) {
         setError('Por favor, selecione a data máxima para pagamento');
@@ -170,7 +208,7 @@ const PagamentoModal = ({
         setError('Por favor, insira um valor válido para a prestação');
         return;
       }
-      
+
       const valorPrestacaoNum = parseFloat(valorPrestacao);
       if (valorPrestacaoNum > totalGeral) {
         setError('O valor da prestação não pode ser superior ao total em dívida');
@@ -178,14 +216,10 @@ const PagamentoModal = ({
       }
     }
 
-    // Determinar o valor baseado no tipo de pagamento
-    const value = typePagamento === 'prestacao' ? parseFloat(valorPrestacao) : parseFloat(valuePago);
-    
-    // Para pagamentos a pronto, validar se não excede a dívida
-    if (typePagamento === 'pronto' && value > totalGeral) {
-      setError('O valor pago não pode ser superior ao total em dívida');
-      return;
-    }
+    // Determinar o valor total baseado no tipo
+    const value = typePagamento === 'prestacao'
+      ? parseFloat(valorPrestacao)
+      : Math.round(parcelas.reduce((s, p) => s + (parseFloat(p.value) || 0), 0) * 100) / 100;
 
     setIsLoading(true);
     setError('');
@@ -195,25 +229,35 @@ const PagamentoModal = ({
       const pagamentosAtuais = aluno.pagamentos || [];
       let pagamentosFinais = [];
 
+      // Determinar o método principal (para backwards compat)
+      // Se só uma parcela, o método é directo; se várias, fica 'misto'
+      const metodoPrincipal = parcelas.length === 1 ? parcelas[0].method : 'misto';
+
       if (selectedInstallment) {
         // Pagamento de prestação específica existente
         const movimentoId = await registrarMovimento(
           'pagamento',
           `Pagamento de prestação ${selectedInstallment.numeroPrestacao || 1} - ${aluno.name}`,
           value,
-          paymentMethod,
+          metodoPrincipal,
           observations
         );
 
-        // Atualizar a prestação específica para marcá-la como paga
         pagamentosFinais = pagamentosAtuais.map(pagamento => {
           if (pagamento === selectedInstallment) {
             return {
               ...pagamento,
               isPago: true,
-              method: paymentMethod,
-              metodo: paymentMethod,
-              paymentMethod: paymentMethod,
+              method: metodoPrincipal,
+              metodo: metodoPrincipal,
+              paymentMethod: metodoPrincipal,
+              // Guardar parcelas se mais de 1 método
+              ...(parcelas.length > 1 && {
+                parcelas: parcelas.map(p => ({
+                  method: p.method,
+                  value: parseFloat(p.value)
+                }))
+              }),
               date: Timestamp.now(),
               data: Timestamp.now(),
               movimentoId: movimentoId,
@@ -229,16 +273,18 @@ const PagamentoModal = ({
           updatedAt: Timestamp.now()
         });
       } else {
-        // Criar novo pagamento (lógica original)
-        const movimentoId = typePagamento === 'pronto' ? 
+        // Criar novo pagamento
+        const movimentoId = typePagamento === 'pronto' ?
           await registrarMovimento(
             'pagamento',
-            `Pagamento a pronto - ${aluno.name}`,
+            parcelas.length > 1
+              ? `Pagamento misto (${parcelas.map(p => formatPrice(parseFloat(p.value))).join(' + ')}) - ${aluno.name}`
+              : `Pagamento a pronto - ${aluno.name}`,
             value,
-            paymentMethod,
+            metodoPrincipal,
             observations
-          ) : 
-          null; // Prestações não criam movimento até serem pagas
+          ) :
+          null;
 
         const novoPagamento = {
           type: typePagamento,
@@ -247,24 +293,31 @@ const PagamentoModal = ({
           data: Timestamp.now(),
           observations: observations.trim(),
           observacoes: observations.trim(),
-          movimentoId: movimentoId, // Referência ao movimento
+          movimentoId: movimentoId,
           createdAt: Timestamp.now(),
           // Campos específicos para pagamento a pronto
           ...(typePagamento === 'pronto' && {
-            method: paymentMethod,
-            metodo: paymentMethod,
-            paymentMethod: paymentMethod
+            method: metodoPrincipal,
+            metodo: metodoPrincipal,
+            paymentMethod: metodoPrincipal,
+            // Guardar parcelas se mais de 1 método
+            ...(parcelas.length > 1 && {
+              parcelas: parcelas.map(p => ({
+                method: p.method,
+                value: parseFloat(p.value)
+              }))
+            })
           }),
           // Campos específicos para pagamento por prestação
           ...(typePagamento === 'prestacao' && {
-            dataMaximaPagamento: dataMaximaPagamento ? 
-              Timestamp.fromDate(new Date(dataMaximaPagamento + 'T00:00:00')) : 
+            dataMaximaPagamento: dataMaximaPagamento ?
+              Timestamp.fromDate(new Date(dataMaximaPagamento + 'T00:00:00')) :
               null,
             valorPrestacao: parseFloat(valorPrestacao),
-            isPago: false, // Inicialmente não pago
-            method: null, // Método só será definido quando for pago
-            metodo: null, // Método só será definido quando for pago
-            paymentMethod: null // Método só será definido quando for pago
+            isPago: false,
+            method: null,
+            metodo: null,
+            paymentMethod: null
           })
         };
         pagamentosFinais = [...pagamentosAtuais, novoPagamento];
@@ -279,13 +332,11 @@ const PagamentoModal = ({
         });
       }
 
-      // Chamar onSuccess para recarregar dados (sem await para não bloquear)
-      // O handlePagamentoSuccess já vai fazer o refreshAlunoData
       if (onSuccess) {
-        onSuccess(); // Removido await - refreshAlunoData já faz a atualização
+        onSuccess();
       }
       onClose();
-      
+
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
       setError('Erro ao processar pagamento. Tente novamente.');
@@ -301,23 +352,22 @@ const PagamentoModal = ({
       const movimento = {
         type: 'pagamento',
         description: descricao,
-        value: valor, // Valor positivo para pagamentos
+        value: valor,
         quantity: 1,
         paymentMethod: metodoPagamento,
-        date: Timestamp.now(), // Sempre usar data/hora atual para pagamentos efetivos
+        date: Timestamp.now(),
         typeOperacao: tipo,
         alunoId: aluno.id,
         alunoName: aluno.name,
         observations: observacoes,
-        naoAfetarFinanceiro: naoAfetarFinanceiro, // Flag para não afetar visão financeira
+        naoAfetarFinanceiro: naoAfetarFinanceiro,
         createdAt: Timestamp.now()
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
-      return movimentoRef.id; // Retornar ID do movimento
+      return movimentoRef.id;
     } catch (err) {
       console.error('Erro ao registrar movimento:', err);
-      // Não falhar a operação principal por causa do movimento
       return null;
     }
   };
@@ -326,8 +376,7 @@ const PagamentoModal = ({
     if (!isLoading) {
       setEtapa(1);
       setTipoPagamento('');
-      setMetodoPagamento('dinheiro');
-      setValorPago('');
+      setParcelas([{ method: 'dinheiro', value: '' }]);
       setPaymentDate('');
       setObservacoes('');
       setNaoAfetarFinanceiro(false);
@@ -389,10 +438,10 @@ const PagamentoModal = ({
                   <div className="type-icon">💰</div>
                   <div className="type-content">
                     <h4>Pagamento a Pronto</h4>
-                    <p>Pagar o value total de uma vez</p>
+                    <p>Pagar com um ou mais métodos</p>
                   </div>
                 </button>
-                
+
                 <button
                   type="button"
                   className="type-option prestacoes"
@@ -427,48 +476,72 @@ const PagamentoModal = ({
                 </button>
               </div>
 
-              {/* Valor do Pagamento - apenas para pagamentos a pronto */}
+              {/* --- Pagamento a pronto: parcelas --- */}
               {typePagamento === 'pronto' && (
-                <div className="form-group">
-                  <label htmlFor="valuePago">Valor a Pagar *</label>
-                  <div className="input-with-currency">
-                      <input
-                        type="number"
-                        id="valuePago"
-                        value={valuePago}
-                        onChange={(e) => setValorPago(e.target.value)}
-                        onWheel={(e) => e.target.blur()}
-                        className="form-input"
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                        max={totalGeral}
-                        required
-                        disabled={isLoading}
-                      />
-                    <span className="currency-symbol">€</span>
-                  </div>
-                  <small>Máximo: {formatPrice(totalGeral)}</small>
-                </div>
-              )}
+                <>
+                  <div className="parcelas-section">
+                    <label className="parcelas-label">Métodos de Pagamento *</label>
 
-              {/* Método de Pagamento - apenas para pagamentos a pronto */}
-              {typePagamento === 'pronto' && (
-                <div className="form-group">
-                  <label htmlFor="paymentMethod">Método de Pagamento *</label>
-                  <select
-                    id="paymentMethod"
-                    value={paymentMethod}
-                    onChange={(e) => setMetodoPagamento(e.target.value)}
-                    className="form-input"
-                    required
-                    disabled={isLoading}
-                  >
-                    <option value="dinheiro">💵 Dinheiro</option>
-                    <option value="transferencia">🏦 Transferência</option>
-                    <option value="multibanco">💳 Multibanco</option>
-                  </select>
-                </div>
+                    {parcelas.map((parcela, index) => (
+                      <div key={index} className="parcela-row">
+                        <select
+                          value={parcela.method}
+                          onChange={(e) => handleParcelaChange(index, 'method', e.target.value)}
+                          className="form-input parcela-method"
+                          disabled={isLoading}
+                        >
+                          {METODOS_PAGAMENTO.map(m => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                          ))}
+                        </select>
+                        <div className="input-with-currency parcela-value-wrap">
+                          <input
+                            type="number"
+                            value={parcela.value}
+                            onChange={(e) => handleParcelaChange(index, 'value', e.target.value)}
+                            onWheel={(e) => e.target.blur()}
+                            className="form-input parcela-value"
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            required
+                            disabled={isLoading}
+                          />
+                          <span className="currency-symbol">€</span>
+                        </div>
+                        {parcelas.length > 1 && (
+                          <button
+                            type="button"
+                            className="parcela-remove"
+                            onClick={() => handleRemoveParcela(index)}
+                            disabled={isLoading}
+                            title="Remover método"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      className="parcela-add"
+                      onClick={handleAddParcela}
+                      disabled={isLoading}
+                    >
+                      + Adicionar método de pagamento
+                    </button>
+
+                    {/* Resumo das parcelas */}
+                    <div className="parcelas-resumo">
+                      <span>Total:</span>
+                      <span className={somaParcelas > totalGeral ? 'valor-excesso' : ''}>
+                        {formatPrice(somaParcelas)}
+                      </span>
+                    </div>
+                    <small>Máximo: {formatPrice(totalGeral)}</small>
+                  </div>
+                </>
               )}
 
               {/* Data do Pagamento - apenas para pagamentos a pronto */}
