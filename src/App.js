@@ -35,6 +35,7 @@ import SuporteEscola from './pages/SuporteEscola';
 import Configuracoes from './pages/Configuracoes';
 import Notificacoes from './pages/Notificacoes';
 import Documentos from './pages/Documentos';
+import ModelosContrato from './pages/ModelosContrato';
 
 // Layout component that includes the header for all pages
 const Layout = ({ children }) => {
@@ -376,6 +377,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Funcionarios />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/escola/:escolaId/modelos-contrato" element={
+            <ProtectedRoute>
+              <Layout>
+                <ModelosContrato />
               </Layout>
             </ProtectedRoute>
           } />

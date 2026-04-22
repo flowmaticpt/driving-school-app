@@ -1,0 +1,123 @@
+.editar-modelo-modal {
+  width: 80% !important;
+  max-width: 900px !important;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.editar-modelo-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.editar-modelo-modal .modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.editar-modelo-modal .modal-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.editar-modelo-modal .close-button {
+  color: white;
+}
+
+.editar-modelo-modal .close-button:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.form-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.placeholder-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #ecf0f1;
+}
+
+.placeholder-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.placeholder-group-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.85rem;
+  min-width: 60px;
+  padding-top: 0.35rem;
+  white-space: nowrap;
+}
+
+.placeholder-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.placeholder-button {
+  padding: 0.35rem 0.7rem;
+  background-color: white;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.placeholder-button:hover:not(:disabled) {
+  background-color: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.placeholder-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.contract-body-textarea {
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  min-height: 350px !important;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+  .editar-modelo-modal {
+    width: 95% !important;
+    max-height: 95vh;
+  }
+
+  .placeholder-group {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .placeholder-group-label {
+    min-width: auto;
+  }
+}

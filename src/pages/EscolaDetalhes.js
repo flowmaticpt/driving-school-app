@@ -427,12 +427,20 @@ const EscolaDetalhes = () => {
                       <span className="menu-label">Relatórios</span>
                     </button>
 
-                    <button 
+                    <button
                       className="menu-button"
                       onClick={() => navigate(`/escola/${escolaId}/suporte`)}
                     >
                       <div className="menu-icon">🆘</div>
                       <span className="menu-label">Suporte</span>
+                    </button>
+
+                    <button
+                      className="menu-button"
+                      onClick={() => navigate(`/escola/${escolaId}/modelos-contrato`)}
+                    >
+                      <div className="menu-icon">📝</div>
+                      <span className="menu-label">Modelos de Contrato</span>
                     </button>
           </div>
         </div>

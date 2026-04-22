@@ -1,0 +1,231 @@
+.gerar-contrato-modal {
+  width: 70% !important;
+  max-width: 900px !important;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gerar-contrato-modal .modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.gerar-contrato-modal .modal-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.gerar-contrato-modal .close-button {
+  color: white;
+}
+
+.gerar-contrato-modal .close-button:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gerar-contrato-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  min-height: 0;
+}
+
+.gerar-contrato-modal .modal-actions {
+  flex-shrink: 0;
+}
+
+.aluno-info-bar {
+  background-color: #f0f4ff;
+  border: 1px solid #d0d9f0;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  color: #2c3e50;
+}
+
+.aluno-info-bar span {
+  color: #7f8c8d;
+}
+
+.section-label {
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.template-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.template-option:hover {
+  border-color: #667eea;
+  background-color: #f8f9ff;
+}
+
+.template-option.selected {
+  border-color: #667eea;
+  background-color: #f0f4ff;
+}
+
+.template-radio {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #bdc3c7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease;
+}
+
+.template-option.selected .template-radio {
+  border-color: #667eea;
+}
+
+.radio-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.radio-dot.active {
+  background-color: #667eea;
+}
+
+.template-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.template-info strong {
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.template-desc {
+  color: #7f8c8d;
+  font-size: 0.85rem;
+}
+
+.preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+}
+
+.pdf-preview-iframe {
+  width: 100%;
+  flex: 1;
+  min-height: 500px;
+  border: 1px solid #ecf0f1;
+  border-radius: 6px;
+}
+
+.text-preview {
+  background-color: #f8f9fa;
+  border: 1px solid #ecf0f1;
+  border-radius: 6px;
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.text-preview pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.download-button {
+  background-color: #27ae60 !important;
+}
+
+.download-button:hover {
+  background-color: #219a52 !important;
+}
+
+.gerar-contrato-modal .loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.gerar-contrato-modal .loading-spinner {
+  border: 4px solid #ecf0f1;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: gerar-spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes gerar-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gerar-contrato-modal .empty-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.gerar-contrato-modal .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.gerar-contrato-modal .empty-state h3 {
+  color: #2c3e50;
+  margin: 0 0 0.5rem 0;
+}
+
+.gerar-contrato-modal .empty-state p {
+  color: #7f8c8d;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .gerar-contrato-modal {
+    width: 95% !important;
+    max-height: 95vh;
+  }
+
+  .pdf-preview-iframe {
+    min-height: 300px;
+  }
+}

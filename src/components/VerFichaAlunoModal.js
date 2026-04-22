@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, updateDoc, collection, query, orderBy, getDocs, addDoc, getDoc, where, arrayRemove, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import PagamentoModal from './PagamentoModal';
+import GerarContratoModal from './GerarContratoModal';
 import { formatPrice, formatDate } from '../utils/formatters';
 import './VerFichaAlunoModal.css';
 
@@ -49,6 +50,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
   const [cacheEscolaId, setCacheEscolaId] = useState(null);
   // Estado local para pagamentos - CRÍTICO para atualização imediata
   const [pagamentosLocal, setPagamentosLocal] = useState(null);
+  const [showGerarContrato, setShowGerarContrato] = useState(false);
 
   // Função para buscar aulas do aluno - OTIMIZADA: busca apenas as aulas do aluno
   const fetchAulasAluno = async () => {
@@ -276,6 +278,15 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       fetchAulasAluno();
     }
   }, [isOpen, aluno?.id]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [isOpen]);
 
 
   useEffect(() => {
@@ -1019,6 +1030,11 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                 {!readOnly && (
                   <button className="edit-button" onClick={handleEdit} disabled={isLoading}>
                     Editar
+                  </button>
+                )}
+                {!readOnly && (
+                  <button className="edit-button" onClick={() => setShowGerarContrato(true)} disabled={isLoading}>
+                    Gerar Contrato
                   </button>
                 )}
                 {!readOnly && aluno?.active !== false && (
@@ -2019,6 +2035,15 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
           servicosAtivos={servicosAtivos}
           materiaisComprados={materiaisComprados}
           selectedInstallment={selectedInstallment}
+        />
+
+        {/* Modal de Gerar Contrato */}
+        <GerarContratoModal
+          isOpen={showGerarContrato}
+          onClose={() => setShowGerarContrato(false)}
+          aluno={aluno}
+          escolaId={escolaId}
+          extras={{ totalServicos, totalDivida: totalEmDivida }}
         />
 
       </div>
