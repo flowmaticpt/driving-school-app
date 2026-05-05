@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc, collection, getDocs, query, where, deleteDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, deleteDoc, arrayRemove, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import CriarAulaModal from './CriarAulaModal';
 import EditarAulaModal from './EditarAulaModal';
@@ -25,6 +25,7 @@ const VerFichaInstrutorModal = ({ instrutor, onClose, onSuccess }) => {
       fetchVeiculoInfo();
       fetchAulas();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instrutor]);
 
   const fetchVeiculoInfo = async () => {
@@ -88,7 +89,7 @@ const VerFichaInstrutorModal = ({ instrutor, onClose, onSuccess }) => {
         email: localInstrutor.email || null,
         phone: localInstrutor.phone || null,
         carroHabitual: localInstrutor.carroHabitual || null,
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       });
 
       setEditing(false);
@@ -166,7 +167,7 @@ const VerFichaInstrutorModal = ({ instrutor, onClose, onSuccess }) => {
             const alunoRef = doc(db, 'schools', instrutor.escolaId, 'students', aluno.id);
             await updateDoc(alunoRef, {
               aulas: arrayRemove(aulaSelecionada.id),
-              updatedAt: new Date()
+              updatedAt: Timestamp.now()
             });
           } catch (error) {
             console.error(`Erro ao remover aula do aluno ${aluno.id}:`, error);
@@ -180,7 +181,7 @@ const VerFichaInstrutorModal = ({ instrutor, onClose, onSuccess }) => {
         const instrutorRef = doc(db, 'utilizadores', instrutor.id);
         await updateDoc(instrutorRef, {
           aulas: arrayRemove(aulaSelecionada.id),
-          updatedAt: new Date()
+          updatedAt: Timestamp.now()
         });
       } catch (error) {
         console.error('Erro ao remover aula do instrutor:', error);

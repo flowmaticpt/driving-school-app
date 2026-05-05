@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './PaymentModal.css';
 
@@ -182,7 +182,8 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAti
       };
       
       await updateDoc(alunoRef, {
-        pagamentos: [...pagamentosAtuais, novoPagamento]
+        pagamentos: [...pagamentosAtuais, novoPagamento],
+        updatedAt: Timestamp.now()
       });
 
       setSuccess('Pagamento registado com sucesso!');

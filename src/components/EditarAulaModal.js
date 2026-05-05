@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, arrayRemove, arrayUnion, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './CriarAulaModal.css';
 
@@ -66,6 +66,7 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
       fetchAlunos();
       fetchVeiculos();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aula, instrutor]);
 
   const fetchAlunos = async () => {
@@ -161,7 +162,7 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
         observacoes: formData.observacoes || '',
         alunos: alunosSelecionados,
         status: status,
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       };
 
       // Atualizar a aula
@@ -183,7 +184,7 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
           const alunoRef = doc(db, 'schools', instrutor.escolaId, 'students', aluno.id);
           await updateDoc(alunoRef, {
             aulas: arrayRemove(aula.id),
-            updatedAt: new Date()
+            updatedAt: Timestamp.now()
           });
         } catch (error) {
           console.error(`Erro ao remover aula do aluno ${aluno.id}:`, error);
@@ -196,7 +197,7 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
           const alunoRef = doc(db, 'schools', instrutor.escolaId, 'students', aluno.id);
           await updateDoc(alunoRef, {
             aulas: arrayUnion(aula.id),
-            updatedAt: new Date()
+            updatedAt: Timestamp.now()
           });
         } catch (error) {
           console.error(`Erro ao adicionar aula ao aluno ${aluno.id}:`, error);

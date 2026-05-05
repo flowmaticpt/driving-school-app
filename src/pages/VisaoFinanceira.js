@@ -33,12 +33,14 @@ const VisaoFinanceira = () => {
     if (escolaId) {
       fetchEscola();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   useEffect(() => {
     if (escola) {
       calcularDadosFinanceiros();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola, periodo, dataInicio, dataFim]);
 
   // Forçar período "hoje" para utilizadores não-owner
@@ -243,21 +245,37 @@ const VisaoFinanceira = () => {
           despesas += Math.abs(movimento.value);
         }
 
-        // Banco: transferências e multibanco
-        if (movimento.paymentMethod === 'transferencia' || movimento.paymentMethod === 'multibanco') {
-          if (movimento.value > 0) {
+        // Distribuir receitas por método de pagamento (só valor positivo)
+        if (movimento.value > 0) {
+          if (movimento.paymentMethod === 'misto') {
+            if (movimento.parcelas && movimento.parcelas.length > 0) {
+              // Pagamento misto com parcelas: distribuir cada uma pelo seu método
+              movimento.parcelas.forEach(parcela => {
+                const val = parseFloat(parcela.value) || 0;
+                if (parcela.method === 'transferencia' || parcela.method === 'multibanco' || parcela.method === 'mbway') {
+                  banco += val;
+                } else if (parcela.method === 'dinheiro') {
+                  dinheiroFisico += val;
+                }
+              });
+            } else {
+              // Pagamento misto sem parcelas (dados antigos): contar como banco
+              banco += movimento.value;
+            }
+          } else if (movimento.paymentMethod === 'transferencia' || movimento.paymentMethod === 'multibanco' || movimento.paymentMethod === 'mbway') {
             banco += movimento.value;
-          } else {
-            banco += movimento.value; // Pode ser negativo para despesas
+          } else if (movimento.paymentMethod === 'dinheiro') {
+            dinheiroFisico += movimento.value;
           }
         }
 
-        // Dinheiro físico: movimentos com dinheiro
-        if (movimento.paymentMethod === 'dinheiro') {
-          if (movimento.value > 0) {
-            dinheiroFisico += movimento.value;
-          } else {
-            dinheiroFisico += movimento.value; // Pode ser negativo para despesas
+        // Despesas: subtrair do método de pagamento correspondente
+        if (movimento.value < 0) {
+          const valorAbs = Math.abs(movimento.value);
+          if (movimento.paymentMethod === 'transferencia' || movimento.paymentMethod === 'multibanco' || movimento.paymentMethod === 'mbway') {
+            banco -= valorAbs;
+          } else if (movimento.paymentMethod === 'dinheiro') {
+            dinheiroFisico -= valorAbs;
           }
         }
       });
@@ -336,16 +354,14 @@ const VisaoFinanceira = () => {
       <Navigation showBackButton={true} backPath={`/escola/${escolaId}`} showUserActions={true} />
       
       <div className="container">
-        <div className="header">
-          <div className="header-content">
-            <div className="header-left">
-              <button className="back-button" onClick={handleVoltar}>
-                ← Voltar
-              </button>
-              <div className="header-text">
-                <h1>Visão Financeira - {escola?.name}</h1>
-                <p className="periodo-info">{formatarPeriodo()}</p>
-              </div>
+        <div className="vf-header">
+          <div className="vf-header-left">
+            <button className="back-button" onClick={handleVoltar}>
+              ← Voltar
+            </button>
+            <div>
+              <h1>Visão Financeira - {escola?.name}</h1>
+              <p className="periodo-info">{formatarPeriodo()}</p>
             </div>
           </div>
         </div>
@@ -425,7 +441,7 @@ const VisaoFinanceira = () => {
             <div className="card-value">
               {formatPrice(dadosFinanceiros.totalAPagar)}
             </div>
-            <p className="card-description">Dívidas de todos os students</p>
+            <p className="card-description">Dívidas de todos os alunos</p>
           </div>
 
           <div className="finance-card receitas">
@@ -436,7 +452,7 @@ const VisaoFinanceira = () => {
             <div className="card-value">
               {formatPrice(dadosFinanceiros.receitas)}
             </div>
-            <p className="card-description">Pagamentos de students</p>
+            <p className="card-description">Pagamentos de alunos</p>
           </div>
 
           <div className="finance-card despesas">
@@ -469,7 +485,7 @@ const VisaoFinanceira = () => {
             <div className="card-value">
               {formatPrice(dadosFinanceiros.banco)}
             </div>
-            <p className="card-description">Transferências + Multibanco</p>
+            <p className="card-description">Transferências + Multibanco + MBWay</p>
           </div>
 
           <div className="finance-card dinheiro">

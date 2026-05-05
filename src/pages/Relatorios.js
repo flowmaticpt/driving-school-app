@@ -22,6 +22,7 @@ const Relatorios = () => {
 
   useEffect(() => {
     fetchEscola();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const Relatorios = () => {
       fetchServicosPrestados();
       fetchMateriaisPrestados();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola, periodo, dataInicio, dataFim]);
 
   const fetchEscola = async () => {
@@ -252,94 +254,131 @@ const Relatorios = () => {
     navigate(`/escola/${escolaId}`);
   };
 
-  const exportarRelatorioAlunos = () => {
-    const dados = students.map(aluno => {
-      const divida = calcularDividaAluno(aluno);
-      return {
-        'Nome': aluno.name,
-        'Número de Aluno': aluno.numeroAluno || 'N/A',
-        'Total a Pagar': divida.totalDivida,
-        'Total Já Pago': divida.totalPagamentos,
-        'Saldo': divida.saldo
-      };
-    });
+  const calcularLargurasColunas = (dados) => {
+    const colWidths = dados.reduce((acc, row) => {
+      Object.keys(row).forEach((key, i) => {
+        const len = String(row[key] || '').length;
+        acc[i] = Math.max(acc[i] || key.length, len);
+      });
+      return acc;
+    }, {});
+    return Object.values(colWidths).map(w => ({ wch: Math.min(w + 2, 40) }));
+  };
 
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Alunos');
-    
-    const fileName = `Relatorio_Alunos_${escola?.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+  const exportarRelatorioAlunos = () => {
+    try {
+      const dados = students.map(aluno => {
+        const divida = calcularDividaAluno(aluno);
+        return {
+          'Nome': aluno.name,
+          'Número de Aluno': aluno.numeroAluno || 'N/A',
+          'Total a Pagar': (divida.totalDivida || 0).toFixed(2) + ' \u20AC',
+          'Total Já Pago': (divida.totalPagamentos || 0).toFixed(2) + ' \u20AC',
+          'Saldo': (divida.saldo || 0).toFixed(2) + ' \u20AC'
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(dados);
+      ws['!cols'] = calcularLargurasColunas(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Alunos');
+
+      const fileName = `Relatorio_Alunos_${escola?.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Erro ao exportar relatório de alunos:', err);
+      alert('Erro ao exportar relatório de alunos. Tente novamente.');
+    }
   };
 
   const exportarRelatorioMovimentos = () => {
-    const dados = movimentos.map(movimento => {
-      const data = movimento.date?.toDate ? movimento.date.toDate() : new Date(movimento.date);
-      const alunoNumero = (() => {
-        const aluno = students.find(a => a.id === movimento.alunoId);
-        return aluno?.enrollmentNumber || aluno?.studentNumber || 'N/A';
-      })();
-      const naoAfetaFinanceiro = movimento.naoAfetarFinanceiro === true;
-      return {
-        'Data': data.toLocaleDateString('pt-PT'),
-        'Tipo': movimento.type || movimento.tipo || 'N/A',
-        'Descrição': movimento.description || movimento.descricao || 'N/A',
-        'Quantidade': movimento.quantity || movimento.quantidade || 1,
-        'Valor': movimento.value || movimento.valor || 0,
-        'Método de Pagamento': movimento.paymentMethod || movimento.metodoPagamento || 'N/A',
-        'Aluno': movimento.alunoName || 'N/A',
-        'Número de Aluno': alunoNumero,
-        'Tipo de Operação': movimento.typeOperacao || 'N/A',
-        'Não Afeta Visão Financeira': naoAfetaFinanceiro ? 'Sim' : 'Não'
-      };
-    });
+    try {
+      const dados = movimentos.map(movimento => {
+        const data = movimento.date?.toDate ? movimento.date.toDate() : new Date(movimento.date);
+        const alunoNumero = (() => {
+          const aluno = students.find(a => a.id === movimento.alunoId);
+          return aluno?.enrollmentNumber || aluno?.studentNumber || 'N/A';
+        })();
+        const naoAfetaFinanceiro = movimento.naoAfetarFinanceiro === true;
+        return {
+          'Data': data.toLocaleDateString('pt-PT'),
+          'Tipo': movimento.type || movimento.tipo || 'N/A',
+          'Descrição': movimento.description || movimento.descricao || 'N/A',
+          'Quantidade': movimento.quantity || movimento.quantidade || 1,
+          'Valor': (movimento.value || movimento.valor || 0).toFixed(2) + ' \u20AC',
+          'Método de Pagamento': movimento.paymentMethod || movimento.metodoPagamento || 'N/A',
+          'Aluno': movimento.alunoName || 'N/A',
+          'Número de Aluno': alunoNumero,
+          'Tipo de Operação': movimento.typeOperacao || 'N/A',
+          'Não Afeta Visão Financeira': naoAfetaFinanceiro ? 'Sim' : 'Não'
+        };
+      });
 
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Movimentos');
-    
-    const fileName = `Relatorio_Movimentos_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+      const ws = XLSX.utils.json_to_sheet(dados);
+      ws['!cols'] = calcularLargurasColunas(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Movimentos');
+
+      const fileName = `Relatorio_Movimentos_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Erro ao exportar relatório de movimentos:', err);
+      alert('Erro ao exportar relatório de movimentos. Tente novamente.');
+    }
   };
 
   const exportarRelatorioServicosPrestados = () => {
-    const dados = servicosPrestados.map(r => {
-      const data = r.data?.toDate ? r.data.toDate() : new Date(r.data);
-      return {
-        'Data': data.toLocaleDateString('pt-PT'),
-        'Aluno': r.alunoName || 'N/A',
-        'Serviço': r.servicoName || 'N/A',
-        'Preço Unitário': r.precoUnitario || 0,
-        'Quantidade': r.quantidade || 1,
-        'Preço Total': r.precoTotal || ((r.precoUnitario || 0) * (r.quantidade || 1))
-      };
-    });
+    try {
+      const dados = servicosPrestados.map(r => {
+        const data = r.data?.toDate ? r.data.toDate() : new Date(r.data);
+        const total = r.precoTotal || ((r.precoUnitario || 0) * (r.quantidade || 1));
+        return {
+          'Data': data.toLocaleDateString('pt-PT'),
+          'Aluno': r.alunoName || 'N/A',
+          'Serviço': r.servicoName || 'N/A',
+          'Preço Unitário': (r.precoUnitario || 0).toFixed(2) + ' \u20AC',
+          'Quantidade': r.quantidade || 1,
+          'Preço Total': (total).toFixed(2) + ' \u20AC'
+        };
+      });
 
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Serviços Prestados');
-    const fileName = `Relatorio_ServicosPrestados_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+      const ws = XLSX.utils.json_to_sheet(dados);
+      ws['!cols'] = calcularLargurasColunas(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Serviços Prestados');
+      const fileName = `Relatorio_ServicosPrestados_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Erro ao exportar relatório de serviços prestados:', err);
+      alert('Erro ao exportar relatório de serviços prestados. Tente novamente.');
+    }
   };
 
   const exportarRelatorioMateriaisPrestados = () => {
-    const dados = materiaisPrestados.map(r => {
-      const data = r.data?.toDate ? r.data.toDate() : new Date(r.data);
-      return {
-        'Data': data.toLocaleDateString('pt-PT'),
-        'Aluno': r.alunoName || 'N/A',
-        'Material': r.materialName || 'N/A',
-        'Preço Unitário': r.precoUnitario || 0,
-        'Quantidade': r.quantidade || 1,
-        'Preço Total': r.precoTotal || ((r.precoUnitario || 0) * (r.quantidade || 1))
-      };
-    });
+    try {
+      const dados = materiaisPrestados.map(r => {
+        const data = r.data?.toDate ? r.data.toDate() : new Date(r.data);
+        const total = r.precoTotal || ((r.precoUnitario || 0) * (r.quantidade || 1));
+        return {
+          'Data': data.toLocaleDateString('pt-PT'),
+          'Aluno': r.alunoName || 'N/A',
+          'Material': r.materialName || 'N/A',
+          'Preço Unitário': (r.precoUnitario || 0).toFixed(2) + ' \u20AC',
+          'Quantidade': r.quantidade || 1,
+          'Preço Total': (total).toFixed(2) + ' \u20AC'
+        };
+      });
 
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Materiais Prestados');
-    const fileName = `Relatorio_MateriaisPrestados_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+      const ws = XLSX.utils.json_to_sheet(dados);
+      ws['!cols'] = calcularLargurasColunas(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Materiais Prestados');
+      const fileName = `Relatorio_MateriaisPrestados_${escola?.name}_${formatarPeriodo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Erro ao exportar relatório de materiais prestados:', err);
+      alert('Erro ao exportar relatório de materiais prestados. Tente novamente.');
+    }
   };
 
   if (loading) {

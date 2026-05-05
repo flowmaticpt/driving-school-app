@@ -526,7 +526,7 @@ const ExtrairVariaveisPagamentos = () => {
 
             if (precisaAtualizar) {
               const alunoRef = doc(db, 'schools', escolaId, 'students', alunoId);
-              batch.update(alunoRef, { pagamentos: novosPagamentos });
+              batch.update(alunoRef, { pagamentos: novosPagamentos, updatedAt: Timestamp.now() });
               batchCount++;
               totalAtualizados++;
 
@@ -792,7 +792,7 @@ const ExtrairVariaveisPagamentos = () => {
 
             if (precisaAtualizar) {
               const alunoRef = doc(db, 'schools', escolaId, 'students', alunoId);
-              batch.update(alunoRef, { pagamentos: novosPagamentos });
+              batch.update(alunoRef, { pagamentos: novosPagamentos, updatedAt: Timestamp.now() });
               batchCount++;
               totalAtualizados++;
 
@@ -1039,7 +1039,7 @@ const ExtrairVariaveisPagamentos = () => {
 
             if (precisaAtualizar) {
               const alunoRef = doc(db, 'schools', escolaId, 'students', alunoId);
-              batch.update(alunoRef, { pagamentos: novosPagamentos });
+              batch.update(alunoRef, { pagamentos: novosPagamentos, updatedAt: Timestamp.now() });
               batchCount++;
               totalAtualizados++;
 
@@ -1333,7 +1333,7 @@ const ExtrairVariaveisPagamentos = () => {
 
             if (precisaAtualizar) {
               const alunoRef = doc(db, 'schools', escolaId, 'students', alunoId);
-              batch.update(alunoRef, { pagamentos: novosPagamentos });
+              batch.update(alunoRef, { pagamentos: novosPagamentos, updatedAt: Timestamp.now() });
               batchCount++;
               totalAtualizados++;
 
@@ -1690,7 +1690,7 @@ const ExtrairVariaveisPagamentos = () => {
 
             if (precisaAtualizar) {
               const alunoRef = doc(db, 'schools', escolaId, 'students', alunoId);
-              batch.update(alunoRef, { pagamentos: novosPagamentos });
+              batch.update(alunoRef, { pagamentos: novosPagamentos, updatedAt: Timestamp.now() });
               batchCount++;
               totalAtualizados++;
 

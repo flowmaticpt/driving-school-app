@@ -6,7 +6,7 @@ import GerarContratoModal from './GerarContratoModal';
 import { formatPrice, formatDate } from '../utils/formatters';
 import './VerFichaAlunoModal.css';
 
-const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlunoUpdate, readOnly = false }) => {
+const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlunoUpdate, readOnly = false, userRole }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -676,10 +676,9 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         quantidade
       );
 
-      // Atualizar o aluno localmente sem recarregar do Firebase
-      if (onAlunoUpdate) {
-        onAlunoUpdate({ ...aluno, servicosAtivos: novosServicosAtivos });
-      }
+      // Recarregar dados completos do aluno do Firebase
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refreshAlunoData();
 
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -718,11 +717,10 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
           updatedAt: Timestamp.now()
         });
         
-        // Atualizar o aluno localmente sem recarregar do Firebase
-        if (onAlunoUpdate) {
-          onAlunoUpdate({ ...aluno, servicosAtivos: novosServicosAtivos });
-        }
-        
+        // Recarregar dados completos do aluno do Firebase
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await refreshAlunoData();
+
         if (onSuccess) onSuccess();
       } catch (err) {
         console.error('Erro ao remover serviço:', err);
@@ -742,11 +740,10 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
           updatedAt: Timestamp.now()
         });
         
-        // Atualizar o aluno localmente sem recarregar do Firebase
-        if (onAlunoUpdate) {
-          onAlunoUpdate({ ...aluno, servicosAtivos: novosServicosAtivos });
-        }
-        
+        // Recarregar dados completos do aluno do Firebase
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await refreshAlunoData();
+
         if (onSuccess) onSuccess();
       } catch (err) {
         console.error('Erro ao remover serviço:', err);
@@ -867,13 +864,12 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         quantidadeMaterial
       );
 
-      // Atualizar o aluno localmente sem recarregar do Firebase
-      if (onAlunoUpdate) {
-        onAlunoUpdate({ ...aluno, materiaisComprados: novosMateriaisComprados });
-      }
-
       // Recarregar materiais para atualizar quantidades
       await fetchMateriais();
+
+      // Recarregar dados completos do aluno do Firebase
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refreshAlunoData();
 
       // Store operation details for potential rollback
       setLastMaterialOperation({
@@ -923,12 +919,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
 
       // Update local state
       setMateriaisComprados(materiaisCompradosBefore);
-      if (onAlunoUpdate) {
-        onAlunoUpdate({ ...aluno, materiaisComprados: materiaisCompradosBefore });
-      }
 
       // Reload materials
       await fetchMateriais();
+
+      // Recarregar dados completos do aluno do Firebase
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refreshAlunoData();
 
       // Clear the operation
       setLastMaterialOperation(null);
@@ -1000,10 +997,9 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         updatedAt: Timestamp.now()
       });
 
-      // Atualizar o aluno localmente sem recarregar do Firebase
-      if (onAlunoUpdate) {
-        onAlunoUpdate({ ...aluno, materiaisComprados: novosMateriaisComprados });
-      }
+      // Recarregar dados completos do aluno do Firebase
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refreshAlunoData();
 
       if (onSuccess) onSuccess();
 
@@ -1037,7 +1033,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                     Gerar Contrato
                   </button>
                 )}
-                {!readOnly && aluno?.active !== false && (
+                {!readOnly && userRole === 'dono' && aluno?.active !== false && (
                   <button className="inactive-button" onClick={handleSetInactive} disabled={isLoading}>
                     Marcar como Inativo
                   </button>
