@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { collection, addDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './AdicionarDespesaModal.css';
 
-const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDespesa }) => {
+const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDespesa, categoriasDespesa }) => {
+  const { userData } = useAuth();
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [selectedSubcategoria, setSelectedSubcategoria] = useState('');
   const [formData, setFormData] = useState({
     type: '',
     description: '',
@@ -24,8 +28,15 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.type) {
-      setError('Por favor, selecione o type de despesa');
+    if (!selectedCategoria) {
+      setError('Por favor, selecione a categoria de despesa');
+      return;
+    }
+
+    // If category has subcategories, require one
+    const catObj = (categoriasDespesa || []).find(c => c.id === selectedCategoria);
+    if (catObj && catObj.subcategorias.length > 0 && !selectedSubcategoria) {
+      setError('Por favor, selecione a subcategoria de despesa');
       return;
     }
 
@@ -44,20 +55,31 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
 
     try {
       const value = parseFloat(formData.value);
-      const typeInfo = (typesDespesa || []).find(type => type.id === formData.type);
+
+      // Resolve category and subcategory info
+      const catObj = (categoriasDespesa || []).find(c => c.id === selectedCategoria);
+      const subObj = catObj ? catObj.subcategorias.find(s => s.id === selectedSubcategoria) : null;
+      const tipoId = selectedSubcategoria || selectedCategoria;
+      const tipoNome = subObj ? subObj.nome : (catObj ? catObj.nome : tipoId);
 
       const despesaData = {
-        tipo: formData.type,
-        type: formData.type, // Manter compatibilidade
-        typeNome: typeInfo?.nome || formData.type,
+        tipo: tipoId, // Backwards compat
+        type: tipoId,
+        typeNome: tipoNome,
+        categoria: selectedCategoria,
+        categoriaNome: catObj?.nome || selectedCategoria,
+        subcategoria: selectedSubcategoria || null,
+        subcategoriaNome: subObj?.nome || null,
         description: formData.description.trim(),
         value: value,
         fornecedor: formData.fornecedor.trim() || null,
         observations: formData.observations.trim() || null,
         paymentMethod: paymentMethod,
         naoAfetarFinanceiro: naoAfetarFinanceiro,
-        date: Timestamp.now(),
-        createdAt: Timestamp.now()
+        date: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null
       };
 
       const despesasRef = collection(db, 'schools', escolaId, 'despesas');
@@ -80,9 +102,11 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
         fornecedor: '',
         observations: ''
       });
+      setSelectedCategoria('');
+      setSelectedSubcategoria('');
       setMetodoPagamento('dinheiro');
       setNaoAfetarFinanceiro(false);
-      
+
       onSuccess();
       
     } catch (err) {
@@ -108,7 +132,9 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
         fornecedor: despesaData.fornecedor,
         observations: despesaData.observations,
         naoAfetarFinanceiro: despesaData.naoAfetarFinanceiro,
-        createdAt: Timestamp.now()
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null,
+        createdAt: serverTimestamp()
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
@@ -129,6 +155,8 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
         fornecedor: '',
         observations: ''
       });
+      setSelectedCategoria('');
+      setSelectedSubcategoria('');
       setMetodoPagamento('dinheiro');
       setNaoAfetarFinanceiro(false);
       setError('');
@@ -150,26 +178,51 @@ const AdicionarDespesaModal = ({ isOpen, onClose, onSuccess, escolaId, typesDesp
 
         <form onSubmit={handleSubmit} className="despesa-form">
           <div className="form-group">
-            <label htmlFor="type">Tipo de Despesa *</label>
+            <label htmlFor="categoria">Categoria *</label>
             <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
+              id="categoria"
+              value={selectedCategoria}
+              onChange={(e) => {
+                setSelectedCategoria(e.target.value);
+                setSelectedSubcategoria('');
+              }}
               className="form-input"
               required
               disabled={isLoading}
             >
-              <option value="">Selecione o type</option>
-              {(typesDespesa || [])
-                .filter(type => type.id !== 'materiais') // Excluir materiais
-                .map(type => (
-                  <option key={type.id} value={type.id}>
-                    {type.icon} {type.nome}
-                  </option>
-                ))}
+              <option value="">Selecione a categoria</option>
+              {(categoriasDespesa || []).map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.icon} {cat.nome}
+                </option>
+              ))}
             </select>
           </div>
+
+          {selectedCategoria && (() => {
+            const catObj = (categoriasDespesa || []).find(c => c.id === selectedCategoria);
+            if (!catObj || catObj.subcategorias.length === 0) return null;
+            return (
+              <div className="form-group">
+                <label htmlFor="subcategoria">Subcategoria *</label>
+                <select
+                  id="subcategoria"
+                  value={selectedSubcategoria}
+                  onChange={(e) => setSelectedSubcategoria(e.target.value)}
+                  className="form-input"
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="">Selecione a subcategoria</option>
+                  {catObj.subcategorias.map(sub => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.icon} {sub.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })()}
 
           <div className="form-group">
             <label htmlFor="description">Descrição *</label>

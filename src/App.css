@@ -66,31 +66,31 @@ div.user-info,
 div.user-details,
 .user-details {
   text-align: right !important;
-  background: var(--blue-50) !important;
-  padding: var(--space-2) var(--space-4) !important;
-  border: 1px solid var(--blue-200) !important;
-  border-radius: var(--radius-md) !important;
+  background: none !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   margin-bottom: 0 !important;
 }
 
 .user-name {
-  font-size: var(--font-size-base) !important;
-  font-weight: 600 !important;
-  color: var(--blue-800) !important;
-  display: block !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 500 !important;
+  color: var(--blue-700) !important;
+  display: inline !important;
   margin: 0 !important;
-  line-height: 1.2 !important;
+  line-height: 1.4 !important;
 }
 
 .user-role {
-  font-size: var(--font-size-sm) !important;
-  color: var(--blue-600) !important;
+  font-size: var(--font-size-xs) !important;
+  color: var(--blue-500) !important;
   text-transform: capitalize !important;
-  display: block !important;
-  font-weight: 500 !important;
-  margin: 0 !important;
-  line-height: 1.2 !important;
+  display: inline !important;
+  font-weight: 400 !important;
+  margin: 0 0 0 0.25rem !important;
+  line-height: 1.4 !important;
 }
 
 .button-group {

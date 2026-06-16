@@ -16,12 +16,13 @@ import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import EditarModeloContratoModal from '../components/EditarModeloContratoModal';
 import { useAuth } from '../contexts/AuthContext';
+import { generateSampleTemplate } from '../utils/docxGenerator';
 import './ModelosContrato.css';
 
 const ModelosContrato = () => {
   const { escolaId } = useParams();
-  const navigate = useNavigate();
-  const { userData } = useAuth();
+  useNavigate();
+  useAuth();
   const [templates, setTemplates] = useState([]);
   const [escola, setEscola] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ const ModelosContrato = () => {
   useEffect(() => {
     fetchEscola();
     fetchTemplates();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const fetchEscola = async () => {
@@ -151,10 +153,10 @@ const ModelosContrato = () => {
     }
   };
 
-  const countPlaceholders = (body) => {
-    if (!body) return 0;
-    const matches = body.match(/\{\{[^}]+\}\}/g);
-    return matches ? matches.length : 0;
+  const formatSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
   };
 
   const filteredTemplates = templates.filter(t => {
@@ -174,7 +176,7 @@ const ModelosContrato = () => {
       />
 
       <div className="modelos-header">
-        <h1>📝 Modelos de Contrato</h1>
+        <h1>Modelos de Contrato</h1>
         <p>{escola?.name || 'A carregar...'}</p>
       </div>
 
@@ -183,6 +185,34 @@ const ModelosContrato = () => {
           {message.text}
         </div>
       )}
+
+      <div className="modelos-help-card">
+        <div className="help-card-header">
+          <h3>Como funcionam os modelos de contrato?</h3>
+        </div>
+        <div className="help-card-body">
+          <div className="help-option">
+            <span className="help-option-number">1</span>
+            <div>
+              <strong>Escrever na App (mais facil)</strong>
+              <p>Clique em "+ Novo Modelo", escolha "Escrever na App" e use os botoes para inserir os campos automaticos (nome, NIF, morada, etc.).</p>
+            </div>
+          </div>
+          <div className="help-option">
+            <span className="help-option-number">2</span>
+            <div>
+              <strong>Usar o Word</strong>
+              <p>Escreva o contrato no Word. Onde quiser dados automaticos, escreva codigos como <code>{'{nome}'}</code>, <code>{'{nif}'}</code>, <code>{'{morada}'}</code>. Depois carregue o ficheiro .docx aqui.</p>
+            </div>
+          </div>
+          <div className="help-download">
+            <button onClick={generateSampleTemplate} className="download-example-button-big">
+              Descarregar Contrato de Exemplo
+            </button>
+            <span className="help-download-hint">Descarregue um exemplo pronto com todos os codigos para ver como funciona</span>
+          </div>
+        </div>
+      </div>
 
       <div className="modelos-actions">
         <div className="search-bar">
@@ -206,7 +236,7 @@ const ModelosContrato = () => {
         </div>
       ) : filteredTemplates.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📝</div>
+          <div className="empty-icon">📄</div>
           <h3>
             {searchTerm
               ? 'Nenhum modelo encontrado'
@@ -220,48 +250,61 @@ const ModelosContrato = () => {
         </div>
       ) : (
         <div className="modelos-grid">
-          {filteredTemplates.map((template) => (
-            <div key={template.id} className="modelo-card">
-              <div className="modelo-card-header">
-                <h3>{template.name}</h3>
-                <span className="placeholder-count">
-                  {countPlaceholders(template.body)} placeholders
-                </span>
-              </div>
+          {filteredTemplates.map((template) => {
+            const isLegacy = !template.docxBase64;
+            return (
+              <div key={template.id} className={`modelo-card ${isLegacy ? 'legacy' : ''}`}>
+                <div className="modelo-card-header">
+                  <h3>{template.name}</h3>
+                  {isLegacy ? (
+                    <span className="legacy-badge">Formato antigo</span>
+                  ) : (
+                    <span className="docx-badge">.docx</span>
+                  )}
+                </div>
 
-              {template.description && (
-                <p className="modelo-description">{template.description}</p>
-              )}
-
-              <div className="modelo-preview">
-                {template.body
-                  ? template.body.substring(0, 150) + (template.body.length > 150 ? '...' : '')
-                  : 'Sem conteúdo'}
-              </div>
-
-              <div className="modelo-meta">
-                <span>Criado em: {formatDate(template.createdAt)}</span>
-                {template.updatedAt && template.updatedAt !== template.createdAt && (
-                  <span>Atualizado: {formatDate(template.updatedAt)}</span>
+                {template.description && (
+                  <p className="modelo-description">{template.description}</p>
                 )}
-              </div>
 
-              <div className="modelo-actions">
-                <button
-                  onClick={() => handleEdit(template)}
-                  className="edit-button"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(template)}
-                  className="delete-button"
-                >
-                  Remover
-                </button>
+                {isLegacy ? (
+                  <div className="modelo-legacy-warning">
+                    Este modelo usa o formato antigo (texto). Edite-o para carregar um ficheiro .docx.
+                  </div>
+                ) : (
+                  <div className="modelo-file-info">
+                    <span className="modelo-file-icon">📄</span>
+                    <div className="modelo-file-details">
+                      <span className="modelo-file-name">{template.fileName}</span>
+                      <span className="modelo-file-size">{formatSize(template.fileSize)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="modelo-meta">
+                  <span>Criado em: {formatDate(template.createdAt)}</span>
+                  {template.updatedAt && template.updatedAt !== template.createdAt && (
+                    <span>Atualizado: {formatDate(template.updatedAt)}</span>
+                  )}
+                </div>
+
+                <div className="modelo-actions">
+                  <button
+                    onClick={() => handleEdit(template)}
+                    className="edit-button"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(template)}
+                    className="delete-button"
+                  >
+                    Remover
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

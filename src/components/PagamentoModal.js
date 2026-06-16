@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { doc, updateDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import { formatPrice } from '../utils/formatters';
 import './PagamentoModal.css';
 
@@ -20,6 +21,7 @@ const PagamentoModal = ({
   materiaisComprados = [],
   selectedInstallment = null
 }) => {
+  const { userData } = useAuth();
   const [etapa, setEtapa] = useState(1); // 1: Escolher type, 2: Detalhes do pagamento
   const [typePagamento, setTipoPagamento] = useState(''); // 'pronto' ou 'prestacao'
   // Parcelas: array de {method, value} para pagamento parcial
@@ -187,7 +189,14 @@ const PagamentoModal = ({
         return;
       }
 
-      if (somaArredondada > Math.round(totalGeral * 100) / 100) {
+      if (selectedInstallment) {
+        // Pagamento de prestação: limite é o valor da prestação
+        const maxPrestacao = Math.round(parseFloat(selectedInstallment.valorPrestacao || selectedInstallment.value || 0) * 100) / 100;
+        if (somaArredondada > maxPrestacao) {
+          setError(`O valor não pode ser superior à prestação (${formatPrice(maxPrestacao)})`);
+          return;
+        }
+      } else if (somaArredondada > Math.round(totalGeral * 100) / 100) {
         setError('O valor total não pode ser superior ao total em dívida');
         return;
       }
@@ -202,6 +211,11 @@ const PagamentoModal = ({
     if (typePagamento === 'prestacao') {
       if (!dataMaximaPagamento) {
         setError('Por favor, selecione a data máxima para pagamento');
+        return;
+      }
+      const dtMax = new Date(dataMaximaPagamento + 'T00:00:00');
+      if (isNaN(dtMax.getTime()) || dtMax.getFullYear() < 2020 || dtMax.getFullYear() > 2099) {
+        setError('Data máxima inválida. Verifique o ano (ex: 2026).');
         return;
       }
       if (!valorPrestacao || isNaN(parseFloat(valorPrestacao)) || parseFloat(valorPrestacao) <= 0) {
@@ -235,42 +249,79 @@ const PagamentoModal = ({
 
       if (selectedInstallment) {
         // Pagamento de prestação específica existente
+        const valorOriginal = parseFloat(selectedInstallment.valorPrestacao || selectedInstallment.value || 0);
+        const valorPago = value; // Valor efectivamente pago
+        const pagamentoTotal = valorPago >= valorOriginal - 0.01; // Tolerância de 1 cêntimo
+
         const movimentoId = await registrarMovimento(
           'pagamento',
-          `Pagamento de prestação ${selectedInstallment.numeroPrestacao || 1} - ${aluno.name}`,
-          value,
+          pagamentoTotal
+            ? `Pagamento de prestação ${selectedInstallment.numeroPrestacao || ''} - ${aluno.name}`
+            : `Pagamento parcial de prestação ${selectedInstallment.numeroPrestacao || ''} (${formatPrice(valorPago)} de ${formatPrice(valorOriginal)}) - ${aluno.name}`,
+          valorPago,
           metodoPrincipal,
           observations
         );
 
-        pagamentosFinais = pagamentosAtuais.map(pagamento => {
+        const parcelasData = parcelas.length > 1 ? {
+          parcelas: parcelas.map(p => ({
+            method: p.method,
+            value: parseFloat(p.value)
+          }))
+        } : {};
+
+        pagamentosFinais = [];
+        for (const pagamento of pagamentosAtuais) {
           if (pagamento === selectedInstallment) {
-            return {
+            // Marcar a prestação como paga (com o valor efectivamente pago)
+            pagamentosFinais.push({
               ...pagamento,
               isPago: true,
+              valorPrestacao: valorPago,
+              value: valorPago,
               method: metodoPrincipal,
               metodo: metodoPrincipal,
               paymentMethod: metodoPrincipal,
-              // Guardar parcelas se mais de 1 método
-              ...(parcelas.length > 1 && {
-                parcelas: parcelas.map(p => ({
-                  method: p.method,
-                  value: parseFloat(p.value)
-                }))
-              }),
+              ...parcelasData,
               date: Timestamp.now(),
               data: Timestamp.now(),
               movimentoId: movimentoId,
               observations: observations.trim(),
               observacoes: observations.trim()
-            };
+            });
+
+            if (!pagamentoTotal) {
+              // Pagamento parcial: criar nova prestação para o restante
+              const restante = Math.round((valorOriginal - valorPago) * 100) / 100;
+              pagamentosFinais.push({
+                type: 'prestacao',
+                valorPrestacao: restante,
+                value: restante,
+                dataMaximaPagamento: pagamento.dataMaximaPagamento,
+                isPago: false,
+                method: null,
+                metodo: null,
+                paymentMethod: null,
+                date: Timestamp.now(),
+                data: Timestamp.now(),
+                observations: `Restante da prestação (pago ${formatPrice(valorPago)} de ${formatPrice(valorOriginal)})`,
+                observacoes: `Restante da prestação (pago ${formatPrice(valorPago)} de ${formatPrice(valorOriginal)})`,
+                movimentoId: null,
+                createdAt: Timestamp.now()
+              });
+            }
+          } else {
+            pagamentosFinais.push(pagamento);
           }
-          return pagamento;
-        });
+        }
+
+        // Recalcular dívida total
+        const novaDividaTotal = calcularTotalGeralComPagamentos(pagamentosFinais);
 
         await updateDoc(alunoRef, {
           pagamentos: pagamentosFinais,
-          updatedAt: Timestamp.now()
+          totalDivida: novaDividaTotal,
+          updatedAt: serverTimestamp()
         });
       } else {
         // Criar novo pagamento
@@ -328,12 +379,12 @@ const PagamentoModal = ({
         await updateDoc(alunoRef, {
           pagamentos: pagamentosFinais,
           totalDivida: novaDividaTotal,
-          updatedAt: Timestamp.now()
+          updatedAt: serverTimestamp()
         });
       }
 
       if (onSuccess) {
-        onSuccess();
+        await onSuccess(pagamentosFinais);
       }
       onClose();
 
@@ -355,13 +406,22 @@ const PagamentoModal = ({
         value: valor,
         quantity: 1,
         paymentMethod: metodoPagamento,
-        date: Timestamp.now(),
+        // Guardar parcelas no movimento para desdobrar nos relatórios
+        ...(parcelas.length > 1 && {
+          parcelas: parcelas.map(p => ({
+            method: p.method,
+            value: parseFloat(p.value)
+          }))
+        }),
+        date: serverTimestamp(),
         typeOperacao: tipo,
         alunoId: aluno.id,
         alunoName: aluno.name,
         observations: observacoes,
         naoAfetarFinanceiro: naoAfetarFinanceiro,
-        createdAt: Timestamp.now()
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null,
+        createdAt: serverTimestamp()
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
@@ -593,6 +653,8 @@ const PagamentoModal = ({
                       value={dataMaximaPagamento}
                       onChange={(e) => setDataMaximaPagamento(e.target.value)}
                       className="form-input"
+                      min="2020-01-01"
+                      max="2099-12-31"
                       required
                       disabled={isLoading}
                     />

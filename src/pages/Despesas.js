@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
+import { useParams } from 'react-router-dom';
+import { collection, getDocs, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import AdicionarDespesaModal from '../components/AdicionarDespesaModal';
@@ -9,27 +9,69 @@ import './Despesas.css';
 
 const Despesas = () => {
   const { escolaId } = useParams();
-  const navigate = useNavigate();
   const [escola, setEscola] = useState(null);
   const [expenses, setDespesas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroCategoria, setFiltroCategoria] = useState('todos');
+  const [filtroSubcategoria, setFiltroSubcategoria] = useState('todos');
   const [filtroMetodo, setFiltroMetodo] = useState('todos');
   const [filtroData, setFiltroData] = useState('');
 
-  const tiposDespesa = [
-    { id: 'agua', nome: 'Água', icon: '💧', cor: '#3498db' },
-    { id: 'comida', nome: 'Comida', icon: '🍽️', cor: '#e74c3c' },
-    { id: 'combustivel', nome: 'Combustível', icon: '⛽', cor: '#f39c12' },
-    { id: 'eletricidade', nome: 'Eletricidade', icon: '⚡', cor: '#f1c40f' },
-    { id: 'internet', nome: 'Internet', icon: '🌐', cor: '#9b59b6' },
-    { id: 'limpeza', nome: 'Limpeza', icon: '🧽', cor: '#1abc9c' },
-    { id: 'manutencao', nome: 'Manutenção', icon: '🔧', cor: '#e67e22' },
-    { id: 'materiais', nome: 'Materiais', icon: '📦', cor: '#34495e' },
-    { id: 'outros', nome: 'Outros', icon: '📋', cor: '#95a5a6' }
+  const categoriasDespesa = [
+    {
+      id: 'operacionais',
+      nome: 'Despesas Operacionais',
+      icon: '⚙️',
+      cor: '#e67e22',
+      subcategorias: [
+        { id: 'combustivel', nome: 'Combustível', icon: '⛽' },
+        { id: 'seguros', nome: 'Seguros', icon: '🛡️' },
+        { id: 'imt_licencas', nome: 'IMT / Licenças', icon: '📄' },
+        { id: 'material_pedagogico', nome: 'Material Pedagógico', icon: '📚' },
+        { id: 'exames', nome: 'Exames', icon: '📝' },
+      ]
+    },
+    {
+      id: 'gestao',
+      nome: 'Gestão da Escola',
+      icon: '🏢',
+      cor: '#3498db',
+      subcategorias: [
+        { id: 'renda', nome: 'Renda', icon: '🏠' },
+        { id: 'salarios', nome: 'Salários', icon: '💰' },
+        { id: 'contabilidade', nome: 'Contabilidade', icon: '📊' },
+      ]
+    },
+    {
+      id: 'funcionamento',
+      nome: 'Funcionamento',
+      icon: '🔧',
+      cor: '#1abc9c',
+      subcategorias: [
+        { id: 'agua', nome: 'Água', icon: '💧' },
+        { id: 'eletricidade', nome: 'Eletricidade', icon: '⚡' },
+        { id: 'internet', nome: 'Internet', icon: '🌐' },
+        { id: 'limpeza', nome: 'Limpeza', icon: '🧽' },
+        { id: 'manutencao', nome: 'Manutenção', icon: '🔧' },
+      ]
+    },
+    {
+      id: 'outros',
+      nome: 'Outros',
+      icon: '📋',
+      cor: '#95a5a6',
+      subcategorias: []
+    }
   ];
+
+  // Flat list for backwards compatibility with old despesas
+  const tiposDespesa = categoriasDespesa.flatMap(cat =>
+    cat.subcategorias.length > 0
+      ? cat.subcategorias.map(sub => ({ id: sub.id, nome: sub.nome, icon: sub.icon, cor: cat.cor }))
+      : [{ id: cat.id, nome: cat.nome, icon: cat.icon, cor: cat.cor }]
+  );
 
   const fetchEscola = async () => {
     try {
@@ -79,6 +121,7 @@ const Despesas = () => {
       };
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   // REMOVIDO: Listener de focus era excessivo e causava recarregamentos desnecessários
@@ -100,19 +143,42 @@ const Despesas = () => {
 
   const filteredDespesas = useMemo(() => {
     return expenses.filter(despesa => {
-      const tipoMatch = filtroTipo === 'todos' || despesa.tipo === filtroTipo;
       const metodoMatch = filtroMetodo === 'todos' || despesa.paymentMethod === filtroMetodo;
-      
+
+      // Category/subcategory filter
+      let categoriaMatch = true;
+      if (filtroCategoria !== 'todos') {
+        if (despesa.categoria) {
+          categoriaMatch = despesa.categoria === filtroCategoria;
+        } else {
+          // Backwards compat: match old despesas by checking if their tipo belongs to this category
+          const cat = categoriasDespesa.find(c => c.id === filtroCategoria);
+          if (cat) {
+            categoriaMatch = cat.subcategorias.some(sub => sub.id === despesa.tipo) || (cat.id === despesa.tipo);
+          }
+        }
+      }
+
+      let subcategoriaMatch = true;
+      if (filtroSubcategoria !== 'todos') {
+        if (despesa.subcategoria) {
+          subcategoriaMatch = despesa.subcategoria === filtroSubcategoria;
+        } else {
+          subcategoriaMatch = despesa.tipo === filtroSubcategoria;
+        }
+      }
+
       let dataMatch = true;
       if (filtroData) {
         const despesaData = despesa.date.toDate ? despesa.date.toDate() : new Date(despesa.date);
         const filtroDataObj = new Date(filtroData);
         dataMatch = despesaData.toDateString() === filtroDataObj.toDateString();
       }
-      
-      return tipoMatch && metodoMatch && dataMatch;
+
+      return metodoMatch && dataMatch && categoriaMatch && subcategoriaMatch;
     });
-  }, [expenses, filtroTipo, filtroMetodo, filtroData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses, filtroCategoria, filtroSubcategoria, filtroMetodo, filtroData]);
 
 
   const getMetodoPagamentoLabel = (metodo) => {
@@ -130,15 +196,6 @@ const Despesas = () => {
 
   const getTotalDespesas = () => {
     return filteredDespesas.reduce((total, despesa) => total + (despesa.value || 0), 0);
-  };
-
-  const getTotalPorTipo = () => {
-    const totais = {};
-    filteredDespesas.forEach(despesa => {
-      const tipo = despesa.tipo;
-      totais[tipo] = (totais[tipo] || 0) + (despesa.value || 0);
-    });
-    return totais;
   };
 
   const getTotalPorMetodo = () => {
@@ -198,23 +255,37 @@ const Despesas = () => {
           <p>Gerir despesas da escola</p>
         </div>
 
-        {/* Cards de Tipos de Despesa */}
+        {/* Cards de Categorias de Despesa */}
         <div className="tipos-despesa-section">
-          <h2>Tipos de Despesa</h2>
+          <h2>Categorias de Despesa</h2>
           <div className="tipos-grid">
-            {tiposDespesa.map((tipo) => {
-              const totalTipo = getTotalPorTipo()[tipo.id] || 0;
-              const quantidadeTipo = filteredDespesas.filter(d => d.tipo === tipo.id).length;
-              
+            {categoriasDespesa.map((cat) => {
+              // Sum expenses for this category (new field or backwards compat via subcategoria ids)
+              const subcatIds = cat.subcategorias.map(s => s.id);
+              const despesasCategoria = filteredDespesas.filter(d =>
+                d.categoria === cat.id ||
+                (!d.categoria && (subcatIds.includes(d.tipo) || d.tipo === cat.id))
+              );
+              const totalCategoria = despesasCategoria.reduce((sum, d) => sum + (d.value || 0), 0);
+              const quantidadeCategoria = despesasCategoria.length;
+
               return (
-                <div key={tipo.id} className="tipo-card" style={{ '--tipo-cor': tipo.cor, borderColor: tipo.cor }}>
-                  <div className="tipo-icon" style={{ color: tipo.cor }}>
-                    {tipo.icon}
+                <div
+                  key={cat.id}
+                  className="tipo-card"
+                  style={{ '--tipo-cor': cat.cor, borderColor: cat.cor, cursor: 'pointer' }}
+                  onClick={() => {
+                    setFiltroCategoria(filtroCategoria === cat.id ? 'todos' : cat.id);
+                    setFiltroSubcategoria('todos');
+                  }}
+                >
+                  <div className="tipo-icon" style={{ color: cat.cor }}>
+                    {cat.icon}
                   </div>
                   <div className="tipo-info">
-                    <h3>{tipo.nome}</h3>
-                    <p className="tipo-valor">{formatPrice(totalTipo)}</p>
-                    <p className="tipo-quantidade">{quantidadeTipo} despesas</p>
+                    <h3>{cat.nome}</h3>
+                    <p className="tipo-valor">{formatPrice(totalCategoria)}</p>
+                    <p className="tipo-quantidade">{quantidadeCategoria} despesas</p>
                   </div>
                 </div>
               );
@@ -225,19 +296,42 @@ const Despesas = () => {
         <div className="search-section">
           <div className="search-form">
             <div className="filter-group">
-              <label htmlFor="filtroTipo">Tipo:</label>
+              <label htmlFor="filtroCategoria">Categoria:</label>
               <select
-                id="filtroTipo"
-                value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
+                id="filtroCategoria"
+                value={filtroCategoria}
+                onChange={(e) => {
+                  setFiltroCategoria(e.target.value);
+                  setFiltroSubcategoria('todos');
+                }}
                 className="filter-select"
               >
-                <option value="todos">Todos</option>
-                {tiposDespesa.map(tipo => (
-                  <option key={tipo.id} value={tipo.id}>{tipo.icon} {tipo.nome}</option>
+                <option value="todos">Todas</option>
+                {categoriasDespesa.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.icon} {cat.nome}</option>
                 ))}
               </select>
             </div>
+
+            {filtroCategoria !== 'todos' && (() => {
+              const catSel = categoriasDespesa.find(c => c.id === filtroCategoria);
+              return catSel && catSel.subcategorias.length > 0 ? (
+                <div className="filter-group">
+                  <label htmlFor="filtroSubcategoria">Subcategoria:</label>
+                  <select
+                    id="filtroSubcategoria"
+                    value={filtroSubcategoria}
+                    onChange={(e) => setFiltroSubcategoria(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="todos">Todas</option>
+                    {catSel.subcategorias.map(sub => (
+                      <option key={sub.id} value={sub.id}>{sub.icon} {sub.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null;
+            })()}
 
             <div className="filter-group">
               <label htmlFor="filtroMetodo">Método:</label>
@@ -301,7 +395,11 @@ const Despesas = () => {
         ) : (
           <div className="expenses-list">
             {filteredDespesas.map((despesa) => {
-              const tipoInfo = getTipoDespesa(despesa.tipo);
+              const tipoInfo = getTipoDespesa(despesa.subcategoria || despesa.tipo);
+              // Get category info for display
+              const catInfo = despesa.categoria
+                ? categoriasDespesa.find(c => c.id === despesa.categoria)
+                : categoriasDespesa.find(c => c.subcategorias.some(s => s.id === despesa.tipo));
               return (
                 <div key={despesa.id} className="despesa-item">
                   <div className="despesa-header">
@@ -309,8 +407,13 @@ const Despesas = () => {
                       <span className="tipo-icon" style={{ color: tipoInfo.cor }}>
                         {tipoInfo.icon}
                       </span>
+                      {catInfo && (
+                        <span className="tipo-badge" style={{ backgroundColor: catInfo.cor, opacity: 0.7, fontSize: '0.75em', marginRight: '4px' }}>
+                          {catInfo.nome}
+                        </span>
+                      )}
                       <span className="tipo-badge" style={{ backgroundColor: tipoInfo.cor }}>
-                        {tipoInfo.nome}
+                        {despesa.subcategoriaNome || tipoInfo.nome}
                       </span>
                       <span className="despesa-descricao">{despesa.description}</span>
                       {despesa.materialId && (
@@ -347,6 +450,7 @@ const Despesas = () => {
         onSuccess={handleSuccess}
         escolaId={escolaId}
         typesDespesa={tiposDespesa}
+        categoriasDespesa={categoriasDespesa}
       />
     </div>
   );

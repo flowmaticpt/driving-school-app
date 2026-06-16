@@ -52,7 +52,8 @@ const Movimentos = () => {
       // Só buscar se realmente precisamos (ex: para filtro de texto com enrollmentNumber)
       // Por enquanto mantemos, mas poderia ser lazy-loaded apenas quando filtroTexto é usado
       const studentsRef = collection(db, 'schools', escolaId, 'students');
-      const querySnapshot = await getDocs(studentsRef);
+      const studentsQuery = query(studentsRef, limit(1000));
+      const querySnapshot = await getDocs(studentsQuery);
       
       const alunos = {};
       querySnapshot.forEach((doc) => {
@@ -112,17 +113,28 @@ const Movimentos = () => {
     }
   }, [escolaId]);
 
+  const isDono = userRole === 'dono' || userRole === 'group_owner';
+  const todayStr = new Date().toDateString();
+
   const filteredMovimentos = movimentos.filter(movimento => {
     const tipoMatch = filtroTipo === 'todos' || movimento.type === filtroTipo;
     const metodoMatch = filtroMetodo === 'todos' || movimento.paymentMethod === filtroMetodo;
-    
+
+    // Non-owners can only see today's movements
+    const movimentoData = movimento.date
+      ? (movimento.date.toDate ? movimento.date.toDate() : new Date(movimento.date))
+      : null;
+
+    if (!isDono) {
+      if (!movimentoData || movimentoData.toDateString() !== todayStr) return false;
+    }
+
     let dataMatch = true;
     if (filtroData) {
-      const movimentoData = movimento.date.toDate ? movimento.date.toDate() : new Date(movimento.date);
       const filtroDataObj = new Date(filtroData);
-      dataMatch = movimentoData.toDateString() === filtroDataObj.toDateString();
+      dataMatch = movimentoData && movimentoData.toDateString() === filtroDataObj.toDateString();
     }
-    
+
     let textoMatch = true;
     if (filtroTexto) {
       const alunoName = movimento.alunoName || '';
@@ -131,13 +143,13 @@ const Movimentos = () => {
       const enrollmentNumber = alunoData?.enrollmentNumber || '';
       const movimentoNome = movimento.description || '';
       const searchTerm = filtroTexto.toLowerCase();
-      
-      textoMatch = alunoName.toLowerCase().includes(searchTerm) || 
+
+      textoMatch = alunoName.toLowerCase().includes(searchTerm) ||
                    alunoId.toLowerCase().includes(searchTerm) ||
                    enrollmentNumber.toLowerCase().includes(searchTerm) ||
                    movimentoNome.toLowerCase().includes(searchTerm);
     }
-    
+
     return tipoMatch && metodoMatch && dataMatch && textoMatch;
   });
 
@@ -160,8 +172,15 @@ const Movimentos = () => {
   const getTotalPorMetodo = () => {
     const totais = {};
     filteredMovimentos.forEach(movimento => {
-      const metodo = movimento.paymentMethod;
-      totais[metodo] = (totais[metodo] || 0) + (movimento.value || 0);
+      if (movimento.paymentMethod === 'misto' && movimento.parcelas && movimento.parcelas.length > 0) {
+        movimento.parcelas.forEach(parcela => {
+          const metodo = parcela.method;
+          totais[metodo] = (totais[metodo] || 0) + (parseFloat(parcela.value) || 0);
+        });
+      } else {
+        const metodo = movimento.paymentMethod;
+        totais[metodo] = (totais[metodo] || 0) + (movimento.value || 0);
+      }
     });
     return totais;
   };
@@ -265,19 +284,27 @@ const Movimentos = () => {
               <option value="dinheiro">Dinheiro</option>
               <option value="transferencia">Transferência</option>
               <option value="multibanco">Multibanco</option>
+              <option value="misto">Misto</option>
             </select>
           </div>
 
-          <div className="filter-group">
-            <label htmlFor="filtroData">Data:</label>
-            <input
-              type="date"
-              id="filtroData"
-              value={filtroData}
-              onChange={(e) => setFiltroData(e.target.value)}
-              className="filter-input"
-            />
-          </div>
+          {isDono ? (
+            <div className="filter-group">
+              <label htmlFor="filtroData">Data:</label>
+              <input
+                type="date"
+                id="filtroData"
+                value={filtroData}
+                onChange={(e) => setFiltroData(e.target.value)}
+                className="filter-input"
+              />
+            </div>
+          ) : (
+            <div className="filter-group">
+              <label>Data:</label>
+              <span className="today-label">Hoje</span>
+            </div>
+          )}
 
           <div className="filter-group">
             <label htmlFor="filtroTexto">Pesquisar:</label>
@@ -298,21 +325,25 @@ const Movimentos = () => {
             <h3>Total de Movimentos</h3>
             <p className="stat-value">{filteredMovimentos.length}</p>
           </div>
-          <div className="stat-card">
-            <h3>Valor Total</h3>
-            <p className="stat-value">{formatPrice(getTotalMovimentos())}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Por Método</h3>
-            <div className="metodo-totals">
-              {Object.entries(getTotalPorMetodo()).map(([metodo, total]) => (
-                <div key={metodo} className="metodo-item">
-                  <span className="metodo-name">{getMetodoPagamentoLabel(metodo)}:</span>
-                  <span className="metodo-total">{formatPrice(total)}</span>
-                </div>
-              ))}
+          {isDono && (
+            <div className="stat-card">
+              <h3>Valor Total</h3>
+              <p className="stat-value">{formatPrice(getTotalMovimentos())}</p>
             </div>
-          </div>
+          )}
+          {isDono && (
+            <div className="stat-card">
+              <h3>Por Método</h3>
+              <div className="metodo-totals">
+                {Object.entries(getTotalPorMetodo()).map(([metodo, total]) => (
+                  <div key={metodo} className="metodo-item">
+                    <span className="metodo-name">{getMetodoPagamentoLabel(metodo)}:</span>
+                    <span className="metodo-total">{formatPrice(total)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {filteredMovimentos.length === 0 ? (
@@ -352,12 +383,28 @@ const Movimentos = () => {
                     <span className="quantidade">Qtd: {movimento.quantity}</span>
                   </div>
                   <div className="movimento-meta">
-                    <span className={`metodo-badge ${movimento.paymentMethod}`}>
-                      {getMetodoPagamentoLabel(movimento.paymentMethod)}
-                    </span>
+                    {movimento.paymentMethod === 'misto' && movimento.parcelas && movimento.parcelas.length > 0 ? (
+                      <span className="metodo-badge misto">
+                        {movimento.parcelas.map((p, i) => (
+                          <span key={i}>
+                            {i > 0 && ' + '}
+                            {formatPrice(p.value)} {getMetodoPagamentoLabel(p.method)}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className={`metodo-badge ${movimento.paymentMethod}`}>
+                        {getMetodoPagamentoLabel(movimento.paymentMethod)}
+                      </span>
+                    )}
                     <span className="movimento-data">{formatDate(movimento.date)}</span>
+                    {movimento.createdBy && (
+                      <span className="created-by-badge" title={`Criado por ${movimento.createdBy}`}>
+                        🧑‍💼 {movimento.createdBy}
+                      </span>
+                    )}
                     {(userRole === 'dono' || userRole === 'group_owner') && (
-                      <button 
+                      <button
                         className="cancel-button"
                         onClick={() => handleCancelarMovimento(movimento)}
                         title="Cancelar movimento"

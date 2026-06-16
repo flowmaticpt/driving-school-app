@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './VerFichaServicoModal.css';
 
@@ -70,7 +70,7 @@ const VerFichaServicoModal = ({ isOpen, onClose, servico, escolaId, onSuccess })
         name: formData.name.trim(),
         description: formData.description.trim() || '',
         price: parseFloat(formData.price),
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       });
 
       setIsEditing(false);

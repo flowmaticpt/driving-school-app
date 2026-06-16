@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './AdicionarNovoAlunoModal.css';
 
 const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
+  const { userData } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,8 +14,7 @@ const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
     nif: '',
     cc: '',
     enrollmentDate: '',
-    enrollmentNumber: '',
-    studentNumber: ''
+    enrollmentNumber: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -50,14 +51,15 @@ const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
         cc: formData.cc.trim() || '',
         enrollmentDate: formData.enrollmentDate || null,
         enrollmentNumber: formData.enrollmentNumber.trim() || '',
-        studentNumber: formData.studentNumber.trim() || '',
         totalDivida: 0, // Inicializar dívida total
         active: true, // New students are active by default
-        createdAt: Timestamp.now()
+        createdAt: Timestamp.now(),
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null
       };
 
-      await addDoc(studentsRef, alunoData);
-      
+      const docRef = await addDoc(studentsRef, alunoData);
+
       // Limpar formulário
       setFormData({
         name: '',
@@ -67,11 +69,12 @@ const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
         nif: '',
         cc: '',
         enrollmentDate: '',
-        enrollmentNumber: '',
-        studentNumber: ''
+        enrollmentNumber: ''
       });
-      
-      onSuccess();
+
+      // Passar o aluno criado com o ID para o componente pai poder adicioná-lo à lista imediatamente
+      // Usar Date() real em vez do Timestamp sentinel para o optimistic update funcionar no sort
+      onSuccess({ id: docRef.id, ...alunoData, createdAt: new Date(), updatedAt: new Date() });
       
     } catch (err) {
       console.error('Erro ao adicionar aluno:', err);
@@ -91,8 +94,7 @@ const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
         nif: '',
         cc: '',
         enrollmentDate: '',
-        enrollmentNumber: '',
-        studentNumber: ''
+        enrollmentNumber: ''
       });
       setError('');
       onClose();
@@ -225,18 +227,6 @@ const AdicionarNovoAlunoModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="studentNumber">Número de Aluno</label>
-              <input
-                type="text"
-                id="studentNumber"
-                name="studentNumber"
-                value={formData.studentNumber}
-                onChange={handleInputChange}
-                placeholder="Digite o número de aluno"
-                disabled={isLoading}
-              />
-            </div>
           </div>
 
           {error && <div className="error-message">{error}</div>}

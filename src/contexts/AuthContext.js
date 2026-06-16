@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 const AuthContext = createContext();
@@ -51,12 +51,12 @@ export const AuthProvider = ({ children }) => {
         otherCosts: 0,
         active: false, // Inactive até ser aprovado
         pendingApproval: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       };
-      
+
       await setDoc(doc(db, 'users', user.uid), userData);
-      
+
       return userCredential;
     } catch (error) {
       throw error;
@@ -121,10 +121,10 @@ export const AuthProvider = ({ children }) => {
           otherCosts: 0,
           active: false,
           pendingApproval: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         };
-        
+
         await setDoc(doc(db, 'users', user.uid), userData);
         console.log('✅ AuthContext: Documento pendente criado');
         setUserData({ id: user.uid, ...userData });

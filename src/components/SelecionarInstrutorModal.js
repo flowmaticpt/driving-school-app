@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './SelecionarInstrutorModal.css';
 
@@ -13,6 +13,7 @@ const SelecionarInstrutorModal = ({ escolaId, onClose, onInstrutorSelected }) =>
     if (escolaId) {
       fetchInstrutores();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const fetchInstrutores = async () => {
@@ -23,9 +24,9 @@ const SelecionarInstrutorModal = ({ escolaId, onClose, onInstrutorSelected }) =>
       const instrutoresSnapshot = await getDocs(q);
       
       const instrutoresData = [];
-      for (const doc of instrutoresSnapshot.docs) {
-        const instrutor = { id: doc.id, ...doc.data() };
-        
+      for (const instrutorDoc of instrutoresSnapshot.docs) {
+        const instrutor = { id: instrutorDoc.id, ...instrutorDoc.data() };
+
         // Buscar informações do veículo habitual se existir
         if (instrutor.carroHabitual) {
           try {

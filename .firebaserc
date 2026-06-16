@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "drivingschool-dev"
+    "default": "drivingschool-staging",
+    "production": "drivingschool-195fc"
   }
 }

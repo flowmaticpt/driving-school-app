@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 /**
@@ -53,7 +53,7 @@ export const migrateUsersIsActiveToActive = async () => {
         const userRef = doc(db, 'users', userDoc.id);
         batch.update(userRef, {
           ...updates,
-          updatedAt: new Date()
+          updatedAt: Timestamp.now()
         });
         usersAtualizados++;
       }

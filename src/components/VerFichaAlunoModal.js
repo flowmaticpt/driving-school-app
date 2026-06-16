@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, updateDoc, collection, query, orderBy, getDocs, addDoc, getDoc, where, arrayRemove, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import PagamentoModal from './PagamentoModal';
 import GerarContratoModal from './GerarContratoModal';
 import { formatPrice, formatDate } from '../utils/formatters';
 import './VerFichaAlunoModal.css';
 
 const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlunoUpdate, readOnly = false, userRole }) => {
+  const { userData } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,8 +21,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
     cc: '',
     enrollmentDate: '',
     enrollmentNumber: '',
-    studentNumber: '',
-    licenseIssueDate: ''
+    licenseIssueDate: '',
+    licenseExpiryDate: '',
+    theoreticalExamDate: '',
+    theoreticalExamResult: '',
+    practicalExamDate: '',
+    practicalExamResult: '',
+    observations: ''
   });
   const [servicos, setServicos] = useState([]);
   const [servicosAtivos, setServicosAtivos] = useState([]);
@@ -52,54 +59,63 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
   const [pagamentosLocal, setPagamentosLocal] = useState(null);
   const [showGerarContrato, setShowGerarContrato] = useState(false);
 
-  // Função para buscar aulas do aluno - OTIMIZADA: busca apenas as aulas do aluno
+  // Função para buscar aulas do aluno - com fallback para query directa
   const fetchAulasAluno = async () => {
     try {
-      if (!aluno?.id) return;
-      
-      console.log('🔍 Buscando aulas para o aluno:', aluno.id);
-      
-      // Usar o array de IDs de aulas do aluno (se existir) para buscar apenas as aulas necessárias
+      if (!aluno?.id || !escolaId) return;
+
+      const aulasMap = new Map();
+
+      // 1. Buscar pelos IDs no documento do aluno (via rápida)
       const aulasIds = aluno.aulas || [];
-      
-      if (aulasIds.length === 0) {
-        console.log('📚 Aluno não tem aulas registadas');
-        setAulas([]);
-        return;
-      }
-      
-      // Buscar apenas as aulas específicas do aluno usando getDoc para cada ID
-      // Isso é muito mais eficiente do que buscar todas as aulas
-      const aulasPromises = aulasIds.map(async (aulaId) => {
-        try {
-          const aulaRef = doc(db, 'aulas', aulaId);
-          const aulaSnap = await getDoc(aulaRef);
-          if (aulaSnap.exists()) {
-            return { id: aulaSnap.id, ...aulaSnap.data() };
+      if (aulasIds.length > 0) {
+        const aulasPromises = aulasIds.map(async (aulaId) => {
+          try {
+            const aulaRef = doc(db, 'aulas', aulaId);
+            const aulaSnap = await getDoc(aulaRef);
+            if (aulaSnap.exists()) {
+              return { id: aulaSnap.id, ...aulaSnap.data() };
+            }
+            return null;
+          } catch (error) {
+            return null;
           }
-          return null;
-        } catch (error) {
-          console.error(`Erro ao buscar aula ${aulaId}:`, error);
-          return null;
-        }
-      });
-      
-      const aulasData = (await Promise.all(aulasPromises))
-        .filter(aula => aula !== null)
-        .filter(aula => {
-          // Verificar se o aluno ainda está na lista de alunos da aula (validação)
-          return aula.alunos && aula.alunos.some(alunoAula => alunoAula.id === aluno.id);
         });
-      
-      console.log('✅ Aulas do aluno encontradas:', aulasData.length, 'de', aulasIds.length, 'IDs');
-      
+
+        const results = await Promise.all(aulasPromises);
+        results.forEach(aula => {
+          if (aula && aula.alunos && aula.alunos.some(a => a.id === aluno.id)) {
+            aulasMap.set(aula.id, aula);
+          }
+        });
+      }
+
+      // 2. Fallback: query à coleção de aulas por escolaId e filtrar pelo aluno
+      // Isto garante que aulas que não estejam no array do aluno também aparecem
+      try {
+        const aulasRef = collection(db, 'aulas');
+        const q = query(aulasRef, where('escolaId', '==', escolaId));
+        const snap = await getDocs(q);
+        snap.forEach(docSnap => {
+          if (aulasMap.has(docSnap.id)) return; // Já temos esta
+          const aulaData = { id: docSnap.id, ...docSnap.data() };
+          if (aulaData.alunos && aulaData.alunos.some(a => a.id === aluno.id)) {
+            aulasMap.set(aulaData.id, aulaData);
+          }
+        });
+      } catch (err) {
+        console.error('Erro no fallback de aulas:', err);
+      }
+
+      const aulasData = Array.from(aulasMap.values());
+
       // Ordenar por data (mais recentes primeiro)
       aulasData.sort((a, b) => {
-        const dateA = new Date(a.data);
-        const dateB = new Date(b.data);
-        return dateB - dateA;
+        const fullA = (a.data || '') + 'T' + (a.hora || '');
+        const fullB = (b.data || '') + 'T' + (b.hora || '');
+        return fullB.localeCompare(fullA);
       });
-      
+
       setAulas(aulasData);
     } catch (error) {
       console.error('Erro ao buscar aulas do aluno:', error);
@@ -231,8 +247,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         cc: aluno.cc || '',
         enrollmentDate: aluno.enrollmentDate || '',
         enrollmentNumber: aluno.enrollmentNumber || '',
-        studentNumber: aluno.studentNumber || '',
-        licenseIssueDate: aluno.licenseIssueDate || ''
+        licenseIssueDate: aluno.licenseIssueDate || '',
+        licenseExpiryDate: aluno.licenseExpiryDate || '',
+        theoreticalExamDate: aluno.theoreticalExamDate || '',
+        theoreticalExamResult: aluno.theoreticalExamResult || '',
+        practicalExamDate: aluno.practicalExamDate || '',
+        practicalExamResult: aluno.practicalExamResult || '',
+        observations: aluno.observations || ''
       });
       setServicosAtivos(aluno.services || aluno.servicosAtivos || []);
       setMateriaisComprados(aluno.materials || aluno.materiaisComprados || []);
@@ -255,8 +276,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         cc: aluno.cc || prev.cc,
         enrollmentDate: aluno.enrollmentDate || prev.enrollmentDate,
         enrollmentNumber: aluno.enrollmentNumber || prev.enrollmentNumber,
-        studentNumber: aluno.studentNumber || prev.studentNumber,
-        licenseIssueDate: aluno.licenseIssueDate || prev.licenseIssueDate
+        licenseIssueDate: aluno.licenseIssueDate || prev.licenseIssueDate,
+        licenseExpiryDate: aluno.licenseExpiryDate || prev.licenseExpiryDate,
+        theoreticalExamDate: aluno.theoreticalExamDate !== undefined ? (aluno.theoreticalExamDate || '') : prev.theoreticalExamDate,
+        theoreticalExamResult: aluno.theoreticalExamResult !== undefined ? (aluno.theoreticalExamResult || '') : prev.theoreticalExamResult,
+        practicalExamDate: aluno.practicalExamDate !== undefined ? (aluno.practicalExamDate || '') : prev.practicalExamDate,
+        practicalExamResult: aluno.practicalExamResult !== undefined ? (aluno.practicalExamResult || '') : prev.practicalExamResult,
+        observations: aluno.observations !== undefined ? aluno.observations : prev.observations
       }));
       // Só atualizar se realmente mudou (evitar re-renders)
       if (JSON.stringify(aluno.services || aluno.servicosAtivos || []) !== JSON.stringify(servicosAtivos)) {
@@ -270,7 +296,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         setPagamentosLocal(aluno.pagamentos);
       }
     }
-  }, [aluno?.name, aluno?.email, aluno?.address, aluno?.phone, aluno?.nif, aluno?.cc, aluno?.enrollmentDate, aluno?.enrollmentNumber, aluno?.studentNumber, aluno?.licenseIssueDate, aluno?.pagamentos, aluno?.services, aluno?.servicosAtivos, aluno?.materials, aluno?.materiaisComprados]);
+  }, [aluno?.name, aluno?.email, aluno?.address, aluno?.phone, aluno?.nif, aluno?.cc, aluno?.enrollmentDate, aluno?.enrollmentNumber, aluno?.licenseIssueDate, aluno?.licenseExpiryDate, aluno?.theoreticalExamDate, aluno?.theoreticalExamResult, aluno?.practicalExamDate, aluno?.practicalExamResult, aluno?.observations, aluno?.pagamentos, aluno?.services, aluno?.servicosAtivos, aluno?.materials, aluno?.materiaisComprados]);
 
   // Efeito para buscar aulas quando o modal abrir
   useEffect(() => {
@@ -350,6 +376,8 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         data: Timestamp.now(),
         alunoId: aluno.id,
         alunoName: aluno.name,
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null,
         createdAt: Timestamp.now()
       };
 
@@ -385,11 +413,19 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         console.log('✅ Dados do aluno atualizados:', dadosAtualizados);
         console.log('📊 Pagamentos atualizados:', dadosAtualizados.pagamentos?.length || 0);
         
-        // CRÍTICO: Atualizar estados locais PRIMEIRO para UI atualizar imediatamente
+        // Atualizar estados locais
         setServicosAtivos(dadosAtualizados.services || dadosAtualizados.servicosAtivos || []);
         setMateriaisComprados(dadosAtualizados.materials || dadosAtualizados.materiaisComprados || []);
-        // CRÍTICO: Atualizar pagamentos locais IMEDIATAMENTE para UI atualizar
-        setPagamentosLocal(dadosAtualizados.pagamentos || null);
+        // Só atualizar pagamentos do Firebase se tiver dados mais recentes (mais pagamentos)
+        // para não sobrescrever updates optimistas com dados antigos
+        const fetchedPagamentos = dadosAtualizados.pagamentos || [];
+        setPagamentosLocal(prev => {
+          const prevCount = prev ? prev.length : 0;
+          if (fetchedPagamentos.length >= prevCount) {
+            return fetchedPagamentos.length > 0 ? fetchedPagamentos : null;
+          }
+          return prev; // Manter dados locais se tiverem mais pagamentos (update optimista)
+        });
         
         // Atualizar formData se necessário
         setFormData(prev => ({
@@ -402,8 +438,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
           cc: dadosAtualizados.cc || prev.cc,
           enrollmentDate: dadosAtualizados.enrollmentDate || prev.enrollmentDate,
           enrollmentNumber: dadosAtualizados.enrollmentNumber || prev.enrollmentNumber,
-          studentNumber: dadosAtualizados.studentNumber || prev.studentNumber,
-          licenseIssueDate: dadosAtualizados.licenseIssueDate || prev.licenseIssueDate
+          licenseIssueDate: dadosAtualizados.licenseIssueDate || prev.licenseIssueDate,
+          licenseExpiryDate: dadosAtualizados.licenseExpiryDate || prev.licenseExpiryDate,
+          theoreticalExamDate: dadosAtualizados.theoreticalExamDate !== undefined ? (dadosAtualizados.theoreticalExamDate || '') : prev.theoreticalExamDate,
+          theoreticalExamResult: dadosAtualizados.theoreticalExamResult !== undefined ? (dadosAtualizados.theoreticalExamResult || '') : prev.theoreticalExamResult,
+          practicalExamDate: dadosAtualizados.practicalExamDate !== undefined ? (dadosAtualizados.practicalExamDate || '') : prev.practicalExamDate,
+          practicalExamResult: dadosAtualizados.practicalExamResult !== undefined ? (dadosAtualizados.practicalExamResult || '') : prev.practicalExamResult,
+          observations: dadosAtualizados.observations !== undefined ? dadosAtualizados.observations : prev.observations
         }));
         
         // Atualizar o objeto aluno através da callback do componente pai
@@ -429,27 +470,29 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
     setSelectedInstallment(null);
   };
 
-  const handlePagamentoSuccess = async () => {
+  const handlePagamentoSuccess = async (pagamentosFinais) => {
     // Fechar modal de pagamento
     setShowPagamento(false);
     setSelectedInstallment(null);
-    
-    // Aguardar um pouco para o Firebase atualizar (reduzido de 300ms para 100ms)
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // CRÍTICO: Recarregar dados do aluno do Firebase e atualizar UI imediatamente
-    const dadosAtualizados = await refreshAlunoData();
-    
-    // Se refreshAlunoData retornou dados, forçar re-render verificando pagamentos
-    if (dadosAtualizados && dadosAtualizados.pagamentos) {
-      // Forçar atualização do estado local para garantir que a UI atualiza
-      // O useEffect já vai pegar a mudança através de aluno?.pagamentos?.length
-      console.log('✅ Pagamentos atualizados na UI:', dadosAtualizados.pagamentos.length);
+
+    // CRÍTICO: Se recebemos os pagamentos atualizados diretamente do PagamentoModal,
+    // atualizar a UI imediatamente sem esperar pelo Firebase
+    if (pagamentosFinais && Array.isArray(pagamentosFinais)) {
+      console.log('✅ Pagamentos atualizados na UI (direto):', pagamentosFinais.length);
+      setPagamentosLocal(pagamentosFinais);
+
+      // Atualizar o objeto aluno no componente pai para manter tudo sincronizado
+      if (onAlunoUpdate) {
+        onAlunoUpdate({ ...aluno, pagamentos: pagamentosFinais });
+      }
     }
-    
-    // Recarregar dados do componente pai (opcional, mas mantém sincronização)
+
+    // Recarregar dados do Firebase em background com delay para garantir que o Firestore propagou
+    setTimeout(() => refreshAlunoData(), 2000);
+
+    // Notificar o componente pai
     if (onSuccess) {
-      onSuccess(); // Removido await para não bloquear
+      onSuccess();
     }
   };
 
@@ -575,8 +618,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         cc: aluno.cc || '',
         enrollmentDate: aluno.enrollmentDate || '',
         enrollmentNumber: aluno.enrollmentNumber || '',
-        studentNumber: aluno.studentNumber || '',
-        licenseIssueDate: aluno.licenseIssueDate || ''
+        licenseIssueDate: aluno.licenseIssueDate || '',
+        licenseExpiryDate: aluno.licenseExpiryDate || '',
+        theoreticalExamDate: aluno.theoreticalExamDate || '',
+        theoreticalExamResult: aluno.theoreticalExamResult || '',
+        practicalExamDate: aluno.practicalExamDate || '',
+        practicalExamResult: aluno.practicalExamResult || '',
+        observations: aluno.observations || ''
       });
     }
   };
@@ -601,8 +649,13 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         cc: formData.cc.trim() || '',
         enrollmentDate: formData.enrollmentDate || null,
         enrollmentNumber: formData.enrollmentNumber.trim() || '',
-        studentNumber: formData.studentNumber.trim() || '',
         licenseIssueDate: formData.licenseIssueDate || null,
+        licenseExpiryDate: formData.licenseExpiryDate || null,
+        theoreticalExamDate: formData.theoreticalExamDate || null,
+        theoreticalExamResult: formData.theoreticalExamResult || null,
+        practicalExamDate: formData.practicalExamDate || null,
+        practicalExamResult: formData.practicalExamResult || null,
+        observations: formData.observations.trim(),
         servicosAtivos: servicosAtivos,
         materiaisComprados: materiaisComprados,
         updatedAt: Timestamp.now()
@@ -648,7 +701,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
         servicoName: servico.name,
         servicoPrice: servico.price,
         quantity: quantidade,
-        dateServico: new Date().toISOString(),
+        dateServico: Timestamp.now(),
         total: servico.price * quantidade,
         name: aluno.name
       };
@@ -662,7 +715,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       try {
         const alunoRef = doc(db, 'schools', escolaId, 'students', aluno.id);
         await updateDoc(alunoRef, {
-          servicosAtivos: novosServicosAtivos,
+          services: novosServicosAtivos,
           updatedAt: Timestamp.now()
         });
 
@@ -713,7 +766,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       try {
         const alunoRef = doc(db, 'schools', escolaId, 'students', aluno.id);
         await updateDoc(alunoRef, {
-          servicosAtivos: novosServicosAtivos,
+          services: novosServicosAtivos,
           updatedAt: Timestamp.now()
         });
         
@@ -736,7 +789,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       try {
         const alunoRef = doc(db, 'schools', escolaId, 'students', aluno.id);
         await updateDoc(alunoRef, {
-          servicosAtivos: novosServicosAtivos,
+          services: novosServicosAtivos,
           updatedAt: Timestamp.now()
         });
         
@@ -837,7 +890,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
           materialName: material.name,
           materialPrice: materialPrice,
           quantity: quantidadeMaterial,
-          dateCompra: new Date().toISOString(),
+          dateCompra: Timestamp.now(),
           total: materialPrice * quantidadeMaterial,
           name: aluno.name
         };
@@ -850,7 +903,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       // Gravar automaticamente
       const alunoRef = doc(db, 'schools', escolaId, 'students', aluno.id);
       await updateDoc(alunoRef, {
-        materiaisComprados: novosMateriaisComprados,
+        materials: novosMateriaisComprados,
         updatedAt: Timestamp.now()
       });
 
@@ -993,7 +1046,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
       // Gravar no aluno
       const alunoRef = doc(db, 'schools', escolaId, 'students', aluno.id);
       await updateDoc(alunoRef, {
-        materiaisComprados: novosMateriaisComprados,
+        materials: novosMateriaisComprados,
         updatedAt: Timestamp.now()
       });
 
@@ -1033,7 +1086,7 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                     Gerar Contrato
                   </button>
                 )}
-                {!readOnly && userRole === 'dono' && aluno?.active !== false && (
+                {!readOnly && aluno?.active !== false && (
                   <button className="inactive-button" onClick={handleSetInactive} disabled={isLoading}>
                     Marcar como Inativo
                   </button>
@@ -1080,19 +1133,8 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
               ) : (
                 <h3>{aluno.name}</h3>
               )}
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="studentNumber"
-                  value={formData.studentNumber}
-                  onChange={handleInputChange}
-                  className="edit-input student-number-input"
-                  placeholder="Número de aluno"
-                />
-              ) : (
-                aluno.studentNumber && (
-                  <span className="student-number">#{aluno.studentNumber}</span>
-                )
+              {!isEditing && aluno.enrollmentNumber && (
+                <span className="student-number">#{aluno.enrollmentNumber}</span>
               )}
             </div>
             <div className="aluno-status">
@@ -1296,13 +1338,156 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                   />
                 ) : (
                   <span className="info-value">
-                    {aluno.licenseIssueDate ? 
+                    {aluno.licenseIssueDate ?
                       new Date(aluno.licenseIssueDate).toLocaleDateString('pt-PT', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                       }) : 'Não informado'
                     }
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="licenseExpiryDate">Data Fim da Licença de Aprendizagem</label>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    id="licenseExpiryDate"
+                    name="licenseExpiryDate"
+                    value={formData.licenseExpiryDate}
+                    onChange={handleInputChange}
+                    className="edit-input"
+                  />
+                ) : (
+                  <span className={`info-value${aluno.licenseExpiryDate && new Date(aluno.licenseExpiryDate) < new Date() ? ' license-expired' : ''}`}>
+                    {aluno.licenseExpiryDate ?
+                      new Date(aluno.licenseExpiryDate).toLocaleDateString('pt-PT', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Não informado'
+                    }
+                    {aluno.licenseExpiryDate && new Date(aluno.licenseExpiryDate) < new Date() && (
+                      <span className="license-expired-badge">Expirada</span>
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Exames */}
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="theoreticalExamResult">Exame Teórico</label>
+                {isEditing ? (
+                  <select
+                    id="theoreticalExamResult"
+                    name="theoreticalExamResult"
+                    value={formData.theoreticalExamResult}
+                    onChange={handleInputChange}
+                    className="edit-input"
+                  >
+                    <option value="">Não realizado</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="failed">Reprovado</option>
+                  </select>
+                ) : (
+                  <span className={`info-value ${aluno.theoreticalExamResult === 'approved' ? 'exam-approved' : aluno.theoreticalExamResult === 'failed' ? 'exam-failed' : ''}`}>
+                    {aluno.theoreticalExamResult === 'approved' ? 'Aprovado' : aluno.theoreticalExamResult === 'failed' ? 'Reprovado' : 'Não realizado'}
+                  </span>
+                )}
+              </div>
+              <div className="form-group">
+                <label htmlFor="theoreticalExamDate">Data do Exame Teórico</label>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    id="theoreticalExamDate"
+                    name="theoreticalExamDate"
+                    value={formData.theoreticalExamDate}
+                    onChange={handleInputChange}
+                    className="edit-input"
+                  />
+                ) : (
+                  <span className="info-value">
+                    {aluno.theoreticalExamDate ?
+                      new Date(aluno.theoreticalExamDate).toLocaleDateString('pt-PT', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Não informado'
+                    }
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="practicalExamResult">Exame Prático</label>
+                {isEditing ? (
+                  <select
+                    id="practicalExamResult"
+                    name="practicalExamResult"
+                    value={formData.practicalExamResult}
+                    onChange={handleInputChange}
+                    className="edit-input"
+                  >
+                    <option value="">Não realizado</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="failed">Reprovado</option>
+                  </select>
+                ) : (
+                  <span className={`info-value ${aluno.practicalExamResult === 'approved' ? 'exam-approved' : aluno.practicalExamResult === 'failed' ? 'exam-failed' : ''}`}>
+                    {aluno.practicalExamResult === 'approved' ? 'Aprovado' : aluno.practicalExamResult === 'failed' ? 'Reprovado' : 'Não realizado'}
+                  </span>
+                )}
+              </div>
+              <div className="form-group">
+                <label htmlFor="practicalExamDate">Data do Exame Prático</label>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    id="practicalExamDate"
+                    name="practicalExamDate"
+                    value={formData.practicalExamDate}
+                    onChange={handleInputChange}
+                    className="edit-input"
+                  />
+                ) : (
+                  <span className="info-value">
+                    {aluno.practicalExamDate ?
+                      new Date(aluno.practicalExamDate).toLocaleDateString('pt-PT', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Não informado'
+                    }
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group full-width">
+                <label htmlFor="observations">Observações</label>
+                {isEditing ? (
+                  <textarea
+                    id="observations"
+                    name="observations"
+                    value={formData.observations}
+                    onChange={handleInputChange}
+                    className="edit-input observations-textarea"
+                    placeholder="Notas sobre o aluno..."
+                    rows="4"
+                  />
+                ) : (
+                  <span className="info-value observations-text">
+                    {aluno.observations || 'Sem observações'}
                   </span>
                 )}
               </div>
@@ -1396,13 +1581,15 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                       <span className="servico-quantidade">Qtd: {servico.quantity}</span>
                       <span className="servico-total">{formatPrice(servico.servicoPrice * servico.quantity)}</span>
                     </div>
-                    <button 
+                    {userRole === 'dono' && (
+                    <button
                       className="remove-servico-button"
                       onClick={() => handleRemoveServico(index)}
                       disabled={isLoading}
                     >
                       ×
                     </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1661,16 +1848,17 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                                       })}
                                     </div>
                                   ) : (
-                                    <>
-                                      <span className="method-icon">
-                                        {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? '💵' :
-                                         (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? '💳' : '🏦'}
-                                      </span>
-                                      <span className="method-name">
-                                        {(pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'dinheiro' ? 'Dinheiro' :
-                                         (pagamento.method || pagamento.metodo || pagamento.paymentMethod) === 'multibanco' ? 'Multibanco' : 'Transferência'}
-                                      </span>
-                                    </>
+                                    (() => {
+                                      const met = pagamento.method || pagamento.metodo || pagamento.paymentMethod;
+                                      const icon = met === 'dinheiro' ? '💵' : met === 'multibanco' ? '💳' : met === 'misto' ? '🔀' : '🏦';
+                                      const label = met === 'dinheiro' ? 'Dinheiro' : met === 'multibanco' ? 'Multibanco' : met === 'misto' ? 'Misto' : met === 'mbway' ? 'MBWay' : 'Transferência';
+                                      return (
+                                        <>
+                                          <span className="method-icon">{icon}</span>
+                                          <span className="method-name">{label}</span>
+                                        </>
+                                      );
+                                    })()
                                   )}
                         </div>
                               )}
@@ -1700,6 +1888,11 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                         {(pagamento.observations || pagamento.observacoes) && (
                           <div className="payment-notes">
                             <span className="notes-text">{pagamento.observations || pagamento.observacoes}</span>
+                              </div>
+                            )}
+                            {pagamento.createdBy && (
+                              <div className="payment-created-by">
+                                <span className="created-by-text">Registado por: {pagamento.createdBy}</span>
                               </div>
                             )}
                           </div>
@@ -1746,25 +1939,32 @@ const VerFichaAlunoModal = ({ isOpen, onClose, aluno, escolaId, onSuccess, onAlu
                     <div className="stat-card teorica">
                       <div className="stat-icon">📚</div>
                       <div className="stat-info">
-                        <div className="stat-label">Aulas Teóricas</div>
-                        <div className="stat-value">{aulas.filter(aula => aula.tipo === 'teorica').length}</div>
-                          </div>
-                        </div>
+                        <div className="stat-label">Teóricas</div>
+                        <div className="stat-value">{aulas.filter(a => a.tipo === 'teorica').length}</div>
+                      </div>
+                    </div>
                     <div className="stat-card pratica">
                       <div className="stat-icon">🚗</div>
                       <div className="stat-info">
-                        <div className="stat-label">Aulas Práticas</div>
-                        <div className="stat-value">{aulas.filter(aula => aula.tipo === 'pratica').length}</div>
-                        </div>
-                        </div>
+                        <div className="stat-label">Práticas</div>
+                        <div className="stat-value">{aulas.filter(a => a.tipo === 'pratica').length}</div>
+                      </div>
+                    </div>
                     <div className="stat-card total">
                       <div className="stat-icon">📊</div>
                       <div className="stat-info">
-                        <div className="stat-label">Total de Aulas</div>
+                        <div className="stat-label">Total</div>
                         <div className="stat-value">{aulas.length}</div>
-                          </div>
-                            </div>
+                      </div>
                     </div>
+                    <div className="stat-card horas">
+                      <div className="stat-icon">⏱️</div>
+                      <div className="stat-info">
+                        <div className="stat-label">Horas</div>
+                        <div className="stat-value">{aulas.reduce((sum, a) => sum + (parseFloat(a.horas) || 0), 0)}h</div>
+                      </div>
+                    </div>
+                  </div>
                     
                   {/* Filtros de Aulas */}
                   <div className="aulas-filters">

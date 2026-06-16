@@ -12,7 +12,7 @@ import './Instrutores.css';
 const Instrutores = () => {
   const { escolaId } = useParams();
   const navigate = useNavigate();
-  const { userData } = useAuth();
+  useAuth();
   const [escola, setEscola] = useState(null);
   const [instrutores, setInstrutores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,12 +27,14 @@ const Instrutores = () => {
 
   useEffect(() => {
     fetchEscola();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   useEffect(() => {
     if (escola) {
       fetchInstrutores();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola]);
 
   const fetchEscola = async () => {

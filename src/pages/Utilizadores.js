@@ -20,7 +20,7 @@ const Utilizadores = () => {
   const [selectedUtilizador, setSelectedUtilizador] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [grupos, setGrupos] = useState([]);
-  const [escolas, setEscolas] = useState([]);
+  const [, setEscolas] = useState([]);
 
   useEffect(() => {
     fetchUtilizadores();

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './VerFichaFuncionarioModal.css';
 
@@ -46,7 +46,7 @@ const VerFichaFuncionarioModal = ({ isOpen, onClose, onSuccess, funcionario, esc
       const funcionarioRef = doc(db, 'schools', escolaId, 'funcionarios', funcionario.id);
       await updateDoc(funcionarioRef, {
         ...formData,
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       });
 
       onSuccess();
@@ -78,16 +78,6 @@ const VerFichaFuncionarioModal = ({ isOpen, onClose, onSuccess, funcionario, esc
     });
     setError('');
     setIsEditing(false);
-  };
-
-  const getRoleLabel = (role) => {
-    const roles = {
-      'admin': 'Administrador',
-      'Instructor': 'Instrutor',
-      'group_owner': 'Gestor de Grupo',
-      'dono': 'Dono'
-    };
-    return roles[role] || role;
   };
 
   const formatDate = (timestamp) => {

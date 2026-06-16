@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './AdicionarNovoServicoModal.css';
 
@@ -41,7 +41,7 @@ const AdicionarNovoServicoModal = ({ isOpen, onClose, onSuccess, escolaId }) => 
         name: formData.name.trim(),
         description: formData.description.trim() || '',
         price: parseFloat(formData.price),
-        createdAt: new Date()
+        createdAt: Timestamp.now()
       };
 
       await addDoc(servicesRef, servicoData);

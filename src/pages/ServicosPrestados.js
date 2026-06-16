@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { collection, getDocs, orderBy, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import './ServicosPrestados.css';
@@ -13,6 +13,7 @@ const ServicosPrestados = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [registos, setRegistos] = useState([]);
+  const [totalPago, setTotalPago] = useState(0);
 
   const [filtroData, setFiltroData] = useState('');
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -38,6 +39,19 @@ const ServicosPrestados = () => {
         const snap = await getDocs(q);
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setRegistos(items);
+
+        // Buscar movimentos de pagamento (receitas) para calcular valor pago
+        const movimentosRef = collection(db, 'schools', escolaId, 'movements');
+        const movQ = query(movimentosRef, where('type', '==', 'pagamento'));
+        const movSnap = await getDocs(movQ);
+        let pago = 0;
+        movSnap.docs.forEach(d => {
+          const mov = d.data();
+          if (mov.value > 0 && !mov.naoAfetarFinanceiro) {
+            pago += mov.value;
+          }
+        });
+        setTotalPago(pago);
       } catch (e) {
         console.error('Erro ao carregar serviços prestados:', e);
         setError('Erro ao carregar serviços prestados');
@@ -78,6 +92,29 @@ const ServicosPrestados = () => {
       return dataMatch && textMatch && statusMatch;
     });
   }, [registos, filtroData, filtroTexto, filtroStatus]);
+
+  const resumo = useMemo(() => {
+    // Valor global = soma de todos os serviços ativos (não removidos)
+    const ativos = registos.filter(r => !r.status || r.status === 'ativo');
+    const valorGlobal = ativos.reduce((sum, r) => sum + (r.precoTotal || 0), 0);
+    const totalRegistos = registos.length;
+    const totalAtivos = ativos.length;
+    const totalRemovidos = registos.filter(r => r.status === 'removido').length;
+    const totalReduzidos = registos.filter(r => r.status === 'reduzido').length;
+
+    // Valor em dívida = valor global dos serviços - valor pago
+    const emDivida = Math.max(0, valorGlobal - totalPago);
+
+    return { valorGlobal, totalRegistos, totalAtivos, totalRemovidos, totalReduzidos, emDivida };
+  }, [registos, totalPago]);
+
+  // Totais da lista filtrada
+  const filteredTotals = useMemo(() => {
+    const valorFiltrado = filtered.reduce((sum, r) => sum + (r.precoTotal || 0), 0);
+    const ativosFiltrados = filtered.filter(r => !r.status || r.status === 'ativo');
+    const valorAtivosFiltrados = ativosFiltrados.reduce((sum, r) => sum + (r.precoTotal || 0), 0);
+    return { valorFiltrado, valorAtivosFiltrados, count: filtered.length };
+  }, [filtered]);
 
   const formatPrice = (price) => {
     if (!price) return '0,00 €';
@@ -130,7 +167,48 @@ const ServicosPrestados = () => {
       <Navigation showBackButton={true} backPath={`/escola/${escolaId}`} />
 
       <div className="content">
-        {/* Header removed - using App.js header instead */}
+        {/* Resumo financeiro */}
+        <div className="summary-cards">
+          <div className="summary-card global">
+            <div className="summary-icon">🧾</div>
+            <div className="summary-info">
+              <span className="summary-label">Valor Global (Ativos)</span>
+              <span className="summary-value">{formatPrice(resumo.valorGlobal)}</span>
+              <span className="summary-detail">{resumo.totalAtivos} serviços ativos</span>
+            </div>
+          </div>
+          <div className="summary-card pago">
+            <div className="summary-icon">💰</div>
+            <div className="summary-info">
+              <span className="summary-label">Valor Pago</span>
+              <span className="summary-value">{formatPrice(totalPago)}</span>
+              <span className="summary-detail">Total de receitas</span>
+            </div>
+          </div>
+          <div className="summary-card divida">
+            <div className="summary-icon">📊</div>
+            <div className="summary-info">
+              <span className="summary-label">Em Dívida</span>
+              <span className="summary-value">{formatPrice(resumo.emDivida)}</span>
+              <span className="summary-detail">
+                {resumo.emDivida > 0 ? 'Por receber' : 'Tudo pago'}
+              </span>
+            </div>
+          </div>
+          <div className="summary-card total">
+            <div className="summary-icon">📋</div>
+            <div className="summary-info">
+              <span className="summary-label">Total Registos</span>
+              <span className="summary-value">{resumo.totalRegistos}</span>
+              <span className="summary-detail">
+                {resumo.totalRemovidos > 0 && `${resumo.totalRemovidos} removidos`}
+                {resumo.totalRemovidos > 0 && resumo.totalReduzidos > 0 && ' · '}
+                {resumo.totalReduzidos > 0 && `${resumo.totalReduzidos} reduzidos`}
+                {resumo.totalRemovidos === 0 && resumo.totalReduzidos === 0 && 'Todos ativos'}
+              </span>
+            </div>
+          </div>
+        </div>
 
         <div className="filters-section">
           <div className="filter-group">
@@ -211,6 +289,15 @@ const ServicosPrestados = () => {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="totals-row">
+                  <td colSpan="5" className="totals-label">
+                    Total ({filteredTotals.count} registos filtrados)
+                  </td>
+                  <td className="totals-value">{formatPrice(filteredTotals.valorFiltrado)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}

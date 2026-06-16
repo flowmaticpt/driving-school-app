@@ -12,6 +12,8 @@ export const getMetodoPagamentoLabel = (metodo) => {
     'dinheiro': 'Dinheiro',
     'multibanco': 'Multibanco',
     'transferencia': 'Transferência',
+    'mbway': 'MBWay',
+    'misto': 'Misto',
     'divida': 'Dívida'
   };
   return metodos[metodo] || metodo;

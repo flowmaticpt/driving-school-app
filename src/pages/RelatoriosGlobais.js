@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
@@ -7,8 +6,6 @@ import * as XLSX from 'xlsx';
 import './RelatoriosGlobais.css';
 
 const RelatoriosGlobais = () => {
-  const navigate = useNavigate();
-
   const [allEscolas, setAllEscolas] = useState([]);
   const [selectedEscolaId, setSelectedEscolaId] = useState('todas');
   const [loading, setLoading] = useState(true);
@@ -110,6 +107,7 @@ const RelatoriosGlobais = () => {
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEscolaId, periodo, dataInicio, dataFim, allEscolas]);
 
   const obterPeriodo = () => {

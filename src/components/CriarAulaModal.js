@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, arrayUnion, Timestamp, query, limit, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './CriarAulaModal.css';
 
+const MAX_DURACAO_MINUTOS = 50;
+
 const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
+  const { userData } = useAuth();
   const [formData, setFormData] = useState({
     tipo: 'teorica',
-    minutos: 60, // Default to 60 minutes (1 hour)
+    minutos: 50,
     veiculoId: instrutor?.carroHabitual || '',
     data: '',
     hora: '',
@@ -18,6 +22,7 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [conflitos, setConflitos] = useState([]);
 
   useEffect(() => {
     if (instrutor) {
@@ -28,16 +33,18 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
         veiculoId: instrutor.carroHabitual || ''
       }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instrutor]);
 
   const fetchAlunos = async () => {
     try {
       const studentsRef = collection(db, 'schools', instrutor.escolaId, 'students');
-      const studentsSnapshot = await getDocs(studentsRef);
+      const q = query(studentsRef, limit(1000));
+      const studentsSnapshot = await getDocs(q);
       const alunosData = studentsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })).filter(aluno => aluno.active !== false);
       setAlunos(alunosData);
     } catch (error) {
       console.error('Erro ao buscar alunos:', error);
@@ -79,11 +86,68 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
     });
   };
 
+  const verificarConflitos = async () => {
+    if (!formData.data || !formData.hora) return [];
+
+    try {
+      const aulasRef = collection(db, 'aulas');
+      const q = query(aulasRef, where('escolaId', '==', instrutor.escolaId), where('data', '==', formData.data));
+      const snapshot = await getDocs(q);
+
+      const duracaoMin = parseInt(formData.minutos) || 50;
+      const [h, m] = formData.hora.split(':').map(Number);
+      const inicioNova = h * 60 + m;
+      const fimNova = inicioNova + duracaoMin;
+
+      const conflitosEncontrados = [];
+
+      snapshot.docs.forEach(docSnap => {
+        const aula = docSnap.data();
+        if (aula.status === 'cancelada') return;
+
+        const [ah, am] = (aula.hora || '00:00').split(':').map(Number);
+        const inicioExistente = ah * 60 + am;
+        const fimExistente = inicioExistente + (parseInt(aula.minutos) || 50);
+
+        // Verificar sobreposição de horário
+        const sobrepoe = inicioNova < fimExistente && fimNova > inicioExistente;
+        if (!sobrepoe) return;
+
+        // Conflito de instrutor
+        if (aula.instrutorId === instrutor.id) {
+          conflitosEncontrados.push(`Instrutor ${instrutor.name} ja tem aula as ${aula.hora}`);
+        }
+
+        // Conflito de veiculo
+        if (formData.tipo === 'pratica' && formData.veiculoId && aula.veiculoId === formData.veiculoId) {
+          const veiculo = veiculos.find(v => v.id === formData.veiculoId);
+          conflitosEncontrados.push(`Veiculo ${veiculo?.registration || formData.veiculoId} ja esta em uso as ${aula.hora}`);
+        }
+      });
+
+      return conflitosEncontrados;
+    } catch (err) {
+      console.error('Erro ao verificar conflitos:', err);
+      return [];
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.data || !formData.hora) {
       setError('Data e hora são obrigatórios');
+      return;
+    }
+
+    const duracaoMin = parseInt(formData.minutos) || 50;
+    if (duracaoMin > MAX_DURACAO_MINUTOS) {
+      setError(`A duracao maxima por aula e de ${MAX_DURACAO_MINUTOS} minutos.`);
+      return;
+    }
+
+    if (duracaoMin < 1) {
+      setError('A duracao minima e de 1 minuto.');
       return;
     }
 
@@ -99,8 +163,17 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
 
     setLoading(true);
     setError('');
+    setConflitos([]);
 
     try {
+      // Verificar conflitos de horário
+      const conflitosEncontrados = await verificarConflitos();
+      if (conflitosEncontrados.length > 0) {
+        setConflitos(conflitosEncontrados);
+        setError('Foram detetados conflitos de horario. Verifique antes de continuar.');
+        setLoading(false);
+        return;
+      }
       // Determinar status baseado na data
       const aulaDateTime = new Date(`${formData.data}T${formData.hora}`);
       const agora = new Date();
@@ -124,7 +197,9 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
         status: status,
         escolaId: instrutor.escolaId,
         createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null
       };
 
       // Criar a aula
@@ -215,7 +290,8 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
           <button className="close-button" onClick={handleClose}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={handleSubmit} className="modal-form-wrapper">
+          <div className="modal-form-scroll">
           {/* Tipo e Horas */}
           <div className="form-section">
             <div className="section-header">
@@ -249,13 +325,14 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   className="form-input"
                   min="1"
+                  max={MAX_DURACAO_MINUTOS}
                   step="1"
-                  placeholder="Ex: 34, 97, 120..."
+                  placeholder={`Max ${MAX_DURACAO_MINUTOS} min`}
                   required
                 />
                 <small className="form-hint">
-                  {formData.minutos >= 60 
-                    ? `${Math.floor(formData.minutos / 60)}h ${formData.minutos % 60 > 0 ? formData.minutos % 60 + 'm' : ''}`.trim()
+                  {parseInt(formData.minutos) > MAX_DURACAO_MINUTOS
+                    ? `Maximo ${MAX_DURACAO_MINUTOS} minutos por aula`
                     : `${formData.minutos} minutos`
                   }
                 </small>
@@ -412,8 +489,16 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
           {error && (
             <div className="error-message">
               {error}
+              {conflitos.length > 0 && (
+                <ul className="conflitos-list">
+                  {conflitos.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
+          </div>
 
           <div className="modal-actions">
             <button type="button" className="cancel-button" onClick={handleClose}>

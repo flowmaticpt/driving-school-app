@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, getDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { replacePlaceholders } from '../utils/templatePlaceholders';
-import { generateContractPdf, previewContractPdf } from '../utils/pdfGenerator';
+import { buildPlaceholderData, replacePlaceholders } from '../utils/templatePlaceholders';
+import { downloadFilledDocx, extractTextFromDocx } from '../utils/docxGenerator';
 import './GerarContratoModal.css';
 
 const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) => {
@@ -10,7 +10,6 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
   const [escola, setEscola] = useState(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [previewText, setPreviewText] = useState('');
-  const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [step, setStep] = useState('select'); // 'select' | 'preview'
@@ -19,18 +18,12 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
     if (isOpen && escolaId) {
       fetchData();
     }
-    return () => {
-      // Cleanup blob URL
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, escolaId]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch templates and escola in parallel
       const [templatesSnap, escolaSnap] = await Promise.all([
         getDocs(query(
           collection(db, 'schools', escolaId, 'documentTemplates'),
@@ -41,7 +34,11 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
 
       const templatesList = [];
       templatesSnap.forEach(d => {
-        templatesList.push({ id: d.id, ...d.data() });
+        const data = d.data();
+        // Only include templates that have a .docx file
+        if (data.docxBase64) {
+          templatesList.push({ id: d.id, ...data });
+        }
       });
       setTemplates(templatesList);
 
@@ -59,25 +56,20 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
     setSelectedTemplateId(templateId);
   };
 
-  const handlePreview = async () => {
+  const handlePreview = () => {
     const template = templates.find(t => t.id === selectedTemplateId);
     if (!template) return;
 
     setGenerating(true);
     try {
-      const filled = replacePlaceholders(template.body, aluno, escola, extras);
-      setPreviewText(filled);
-
-      const url = await previewContractPdf(filled, escola, template.name);
-      // Cleanup previous URL
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setPreviewUrl(url);
+      const data = buildPlaceholderData(aluno, escola, extras);
+      const rawText = extractTextFromDocx(template.docxBase64);
+      const filledText = replacePlaceholders(rawText, data);
+      setPreviewText(filledText);
       setStep('preview');
     } catch (error) {
       console.error('Erro ao gerar preview:', error);
-      alert('Erro ao gerar pré-visualização. Tente novamente.');
+      alert('Erro ao gerar pré-visualização: ' + (error.message || error));
     } finally {
       setGenerating(false);
     }
@@ -87,29 +79,26 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
     const template = templates.find(t => t.id === selectedTemplateId);
     if (!template) return;
 
-    const filled = replacePlaceholders(template.body, aluno, escola, extras);
-    const sanitizedName = (aluno?.name || 'aluno').replace(/[^a-zA-Z0-9\u00C0-\u00FF ]/g, '').replace(/\s+/g, '_');
-    const fileName = `Contrato_${sanitizedName}.pdf`;
-
-    generateContractPdf(filled, escola, template.name, fileName);
+    try {
+      const data = buildPlaceholderData(aluno, escola, extras);
+      const sanitizedName = (aluno?.name || 'aluno').replace(/[^a-zA-Z0-9\u00C0-\u00FF ]/g, '').replace(/\s+/g, '_');
+      const fileName = `Contrato_${sanitizedName}.docx`;
+      downloadFilledDocx(template.docxBase64, data, fileName);
+    } catch (error) {
+      console.error('Erro ao descarregar documento:', error);
+      alert('Erro ao descarregar documento: ' + (error.message || error));
+    }
   };
 
   const handleBack = () => {
     setStep('select');
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
+    setPreviewText('');
   };
 
   const handleClose = () => {
     setStep('select');
     setSelectedTemplateId('');
     setPreviewText('');
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
     onClose();
   };
 
@@ -140,9 +129,9 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
 
               {templates.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">📝</div>
+                  <div className="empty-icon">📄</div>
                   <h3>Sem modelos de contrato</h3>
-                  <p>Crie primeiro um modelo de contrato na página "Modelos de Contrato" da escola.</p>
+                  <p>Crie primeiro um modelo de contrato (formato .docx) na página "Modelos de Contrato" da escola.</p>
                 </div>
               ) : (
                 <div className="templates-list">
@@ -161,6 +150,9 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
                         {template.description && (
                           <span className="template-desc">{template.description}</span>
                         )}
+                        {template.fileName && (
+                          <span className="template-file">📄 {template.fileName}</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -169,17 +161,12 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
             </>
           ) : (
             <div className="preview-container">
-              {previewUrl ? (
-                <iframe
-                  src={previewUrl}
-                  className="pdf-preview-iframe"
-                  title="Preview do contrato"
-                />
-              ) : (
-                <div className="text-preview">
-                  <pre>{previewText}</pre>
-                </div>
-              )}
+              <div className="preview-notice">
+                A formatação completa (logo, tabelas, estilos) será visível no documento Word descarregado.
+              </div>
+              <div className="text-preview">
+                <pre>{previewText}</pre>
+              </div>
             </div>
           )}
         </div>
@@ -205,7 +192,7 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
                 Voltar
               </button>
               <button type="button" onClick={handleDownload} className="save-button download-button">
-                Descarregar PDF
+                Descarregar .docx
               </button>
             </>
           )}

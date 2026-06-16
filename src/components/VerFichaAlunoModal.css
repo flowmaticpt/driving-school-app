@@ -9,6 +9,7 @@
   justify-content: center;
   align-items: center;
   z-index: var(--z-modal);
+  overflow: hidden;
 }
 
 .ver-ficha-modal {
@@ -18,7 +19,19 @@
   width: 70% !important;
   max-width: 1000px !important;
   max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ver-ficha-modal > .modal-header {
+  flex-shrink: 0;
+}
+
+.ver-ficha-modal > .modal-body {
+  flex: 1 1 auto;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-header {
@@ -180,7 +193,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 50vh;
 }
 
 .modal-body.single-column {
@@ -380,6 +392,22 @@
 .edit-input:disabled {
   background-color: #f8f9fa;
   cursor: not-allowed;
+}
+
+.form-group.full-width {
+  flex: 1 1 100%;
+}
+
+.observations-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.observations-text {
+  white-space: pre-wrap;
+  color: #4a5568;
 }
 
 .aluno-name-input {
@@ -788,13 +816,20 @@
 .pagamentos-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 2rem;
   padding: 0 0.5rem;
+  flex-wrap: wrap;
+}
+
+.header-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .header-content h3 {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
@@ -1137,6 +1172,16 @@
   font-size: 0.85rem;
   color: #4b5563;
   line-height: 1.5;
+}
+
+.payment-created-by {
+  margin-top: 0.4rem;
+}
+
+.created-by-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
 }
 
 /* Estado Vazio */
@@ -2331,9 +2376,15 @@
 /* Estatísticas das Aulas */
 .aulas-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .aulas-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .stat-card {
@@ -2364,6 +2415,11 @@
 .stat-card.total {
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   border: 2px solid var(--gray-300);
+}
+
+.stat-card.horas {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
 }
 
 .stat-icon {
@@ -2805,8 +2861,36 @@
   .tab-label {
     font-size: var(--font-size-xs);
   }
-  
+
   .tab-icon {
     font-size: var(--font-size-sm);
   }
+}
+
+/* Exam result styles */
+.info-value.exam-approved {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.info-value.exam-failed {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.info-value.license-expired {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.license-expired-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
 }

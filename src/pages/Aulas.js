@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc, deleteDoc, updateDoc, arrayRemove, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, deleteDoc, updateDoc, arrayRemove, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import CriarAulaModal from '../components/CriarAulaModal';
@@ -31,6 +31,7 @@ const Aulas = () => {
 
   useEffect(() => {
     fetchEscola();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ const Aulas = () => {
       fetchAulas();
       fetchInstrutores();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola]);
 
   const fetchEscola = async () => {
@@ -123,10 +125,6 @@ const Aulas = () => {
       console.error('Erro ao buscar aulas:', err);
       setError('Erro ao carregar aulas');
     }
-  };
-
-  const handleBack = () => {
-    navigate(`/escola/${escolaId}`);
   };
 
   const handleCriarAula = () => {
@@ -511,7 +509,7 @@ const Aulas = () => {
         <SelecionarInstrutorModal
           escolaId={escolaId}
           onClose={() => setShowSelecionarInstrutorModal(false)}
-          onSelect={handleInstrutorSelecionado}
+          onInstrutorSelected={handleInstrutorSelecionado}
         />
       )}
 

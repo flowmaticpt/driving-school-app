@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './ReabastecerMaterialModal.css';
 
 const ReabastecerMaterialModal = ({ isOpen, onClose, material, escolaId, onSuccess }) => {
+  const { userData } = useAuth();
   const [formData, setFormData] = useState({
     quantity: '',
     price: ''
@@ -51,10 +53,12 @@ const ReabastecerMaterialModal = ({ isOpen, onClose, material, escolaId, onSucce
         value: -value, // Valor negativo para despesas
         quantity: quantity,
         paymentMethod: paymentMethod,
-        date: Timestamp.now(),
+        date: serverTimestamp(),
         typeOperacao: 'reabastecimento', // Para distinguir de compras de alunos
         materialId: materialId, // Ligação ao material
-        createdAt: Timestamp.now()
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null,
+        createdAt: serverTimestamp()
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
@@ -77,10 +81,10 @@ const ReabastecerMaterialModal = ({ isOpen, onClose, material, escolaId, onSucce
         fornecedor: null,
         observations: `Quantidade: ${materialData.quantity}x | Preço unitário: ${materialData.price}€`,
         paymentMethod: paymentMethod,
-        date: Timestamp.now(),
+        date: serverTimestamp(),
         materialId: materialData.id, // Ligação ao material
         movimentoId: movimentoId, // Ligação ao movimento
-        createdAt: Timestamp.now()
+        createdAt: serverTimestamp()
       };
 
       const despesaRef = await addDoc(despesasRef, despesaData);
@@ -133,7 +137,7 @@ const ReabastecerMaterialModal = ({ isOpen, onClose, material, escolaId, onSucce
         reabastecimentos: reabastecimentosAtualizados,
         unitPrice: price, // Atualizar preço unitário atual
         price: price, // Manter compatibilidade
-        updatedAt: Timestamp.now()
+        updatedAt: serverTimestamp()
       });
 
       // Registrar movimento de pagamento

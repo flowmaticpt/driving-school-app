@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 /**
@@ -27,7 +27,7 @@ export const removeEscolaFromGroups = async (escolaId) => {
       updatePromises.push(
         updateDoc(grupoRef, {
           schoolIds: updatedSchoolIds,
-          updatedAt: new Date()
+          updatedAt: Timestamp.now()
         })
       );
     });
@@ -60,7 +60,7 @@ export const removeGrupoFromEscolas = async (grupoId) => {
       updatePromises.push(
         updateDoc(escolaRef, {
           groupID: '',
-          updatedAt: new Date()
+          updatedAt: Timestamp.now()
         })
       );
     });
@@ -94,7 +94,7 @@ export const removeAdminFromAll = async (adminId) => {
         updatePromises.push(
           updateDoc(escolaRef, {
             admins: updatedAdmins,
-            updatedAt: new Date()
+            updatedAt: Timestamp.now()
           })
         );
       }
@@ -112,7 +112,7 @@ export const removeAdminFromAll = async (adminId) => {
         updatePromises.push(
           updateDoc(grupoRef, {
             admins: updatedAdmins,
-            updatedAt: new Date()
+            updatedAt: Timestamp.now()
           })
         );
       }
@@ -175,7 +175,7 @@ export const cleanupOrphanedReferences = async () => {
         updatePromises.push(
           updateDoc(escolaRef, {
             groupID: '',
-            updatedAt: new Date()
+            updatedAt: Timestamp.now()
           })
         );
       }
@@ -193,7 +193,7 @@ export const cleanupOrphanedReferences = async () => {
           updatePromises.push(
             updateDoc(grupoRef, {
               schoolIds: validSchoolIds,
-              updatedAt: new Date()
+              updatedAt: Timestamp.now()
             })
           );
         }

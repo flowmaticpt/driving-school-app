@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc, updateDoc, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, doc, getDoc, updateDoc, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import VerFichaAlunoModal from '../components/VerFichaAlunoModal';
@@ -77,6 +77,7 @@ const AlunosAntigos = () => {
       };
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const handleReactivate = async (aluno) => {

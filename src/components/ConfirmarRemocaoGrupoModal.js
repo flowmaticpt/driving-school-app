@@ -13,19 +13,23 @@ const ConfirmarRemocaoGrupoModal = ({ isOpen, onClose, grupo, onSuccess }) => {
     setError('');
 
     try {
-      // 1. Primeiro, limpar referências do grupo em escolas
-      await cleanupReferences('grupo', grupo.id);
-      
-      // 2. Depois, remover o documento do grupo
-      const grupoRef = doc(db, 'grupos', grupo.id);
+      // 1. Tentar limpar referências (não bloqueia o delete se falhar)
+      try {
+        await cleanupReferences('grupo', grupo.id);
+      } catch (cleanupErr) {
+        console.warn('Aviso: erro ao limpar referências, mas o grupo será removido:', cleanupErr);
+      }
+
+      // 2. Remover o documento do grupo
+      const grupoRef = doc(db, 'groups', grupo.id);
       await deleteDoc(grupoRef);
-      
+
       onSuccess('Grupo removido com sucesso!');
       onClose();
-      
+
     } catch (err) {
       console.error('Erro ao remover grupo:', err);
-      setError('Erro ao remover grupo. Tente novamente.');
+      setError(`Erro ao remover grupo: ${err.code === 'permission-denied' ? 'Sem permissão. Verifique se é o dono.' : 'Tente novamente.'}`);
     } finally {
       setIsLoading(false);
     }

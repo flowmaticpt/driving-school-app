@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { doc, updateDoc, deleteDoc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, collection, query, where, getDocs, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './ConfirmarCancelamentoModal.css';
 
@@ -92,7 +92,7 @@ const ConfirmarCancelamentoModal = ({
           
           await updateDoc(materialRef, {
             reabastecimentos: reabastecimentosAtualizados,
-            updatedAt: Timestamp.now()
+            updatedAt: serverTimestamp()
           });
         }
       }
@@ -125,7 +125,7 @@ const ConfirmarCancelamentoModal = ({
           await updateDoc(alunoRef, {
             servicosAtivos: servicosAtualizados,
             totalDivida: novaDividaTotal,
-            updatedAt: Timestamp.now()
+            updatedAt: serverTimestamp()
           });
         }
       }
@@ -154,7 +154,7 @@ const ConfirmarCancelamentoModal = ({
           await updateDoc(alunoRef, {
             materiaisComprados: materiaisAtualizados,
             totalDivida: novaDividaTotal,
-            updatedAt: Timestamp.now()
+            updatedAt: serverTimestamp()
           });
         }
         
@@ -172,13 +172,13 @@ const ConfirmarCancelamentoModal = ({
               quantity: movimento.quantity,
               unitPrice: movimento.value / movimento.quantity,
               totalPrice: movimento.value,
-              date: new Date(),
+              date: Timestamp.now(),
               type: 'devolucao'
             };
             
             await updateDoc(materialRef, {
               reabastecimentos: [...reabastecimentos, devolucao],
-              updatedAt: Timestamp.now()
+              updatedAt: serverTimestamp()
             });
           }
         }
@@ -207,7 +207,7 @@ const ConfirmarCancelamentoModal = ({
           await updateDoc(alunoRef, {
             pagamentos: pagamentosAtualizados,
             totalDivida: novaDividaTotal,
-            updatedAt: Timestamp.now()
+            updatedAt: serverTimestamp()
           });
         }
       }

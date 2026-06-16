@@ -149,6 +149,89 @@
   border-color: #3498db;
 }
 
+/* Alertas Section */
+.alertas-section {
+  background-color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.alertas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.alertas-section h2 {
+  color: #e74c3c;
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.alertas-config-btn {
+  background: none;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alertas-config-btn:hover {
+  border-color: #3498db;
+  color: #3498db;
+  background-color: #ebf5fb;
+}
+
+.alertas-empty {
+  color: #95a5a6;
+  font-size: 0.95rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.alertas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.alerta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #fdf8f8;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+.alerta-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.alerta-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.alerta-titulo {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.alerta-descricao {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
 .escola-menu-section {
   background-color: white;
   padding: 2rem;
@@ -283,4 +366,180 @@
   color: #7f8c8d;
   margin: 0;
   font-size: 1.1rem;
+}
+
+/* Alert Config Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.alert-config-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.alert-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.alert-config-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+}
+
+.alert-config-header .close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #7f8c8d;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+
+.alert-config-header .close-button:hover {
+  color: #e74c3c;
+}
+
+.alert-config-body {
+  padding: 1.5rem 2rem;
+}
+
+.alert-config-desc {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.alert-config-group {
+  margin-bottom: 1.5rem;
+}
+
+.alert-config-group h3 {
+  color: #2c3e50;
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.alert-config-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.alert-config-row label {
+  flex: 1;
+  color: #34495e;
+  font-size: 0.9rem;
+}
+
+.alert-config-row input {
+  width: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.alert-config-row input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.alert-config-hint {
+  color: #95a5a6;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.alert-config-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.alert-config-footer .cancel-button {
+  padding: 0.6rem 1.5rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  background: white;
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alert-config-footer .cancel-button:hover {
+  background: #f8f9fa;
+}
+
+.alert-config-footer .save-button {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background: #3498db;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.alert-config-footer .save-button:hover {
+  background: #2980b9;
+}
+
+.alert-config-footer .save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .alert-config-modal {
+    max-width: 100%;
+  }
+
+  .alert-config-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .alert-config-row input {
+    width: 100%;
+  }
+
+  .alertas-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }

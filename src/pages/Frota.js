@@ -22,12 +22,14 @@ const Frota = () => {
 
   useEffect(() => {
     fetchEscola();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   useEffect(() => {
     if (escola) {
       fetchVeiculos();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola]);
 
   const fetchEscola = async () => {

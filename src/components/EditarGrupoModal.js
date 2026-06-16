@@ -61,6 +61,7 @@ const EditarGrupoModal = ({ isOpen, onClose, grupo, onSuccess }) => {
       });
       fetchAdmins();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupo]);
 
   // Buscar todas as schools (com e sem grupo)

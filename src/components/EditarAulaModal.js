@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, arrayRemove, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, arrayRemove, arrayUnion, Timestamp, query, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './CriarAulaModal.css';
 
@@ -72,11 +72,12 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
   const fetchAlunos = async () => {
     try {
       const studentsRef = collection(db, 'schools', instrutor.escolaId, 'students');
-      const studentsSnapshot = await getDocs(studentsRef);
+      const q = query(studentsRef, limit(1000));
+      const studentsSnapshot = await getDocs(q);
       const alunosData = studentsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })).filter(aluno => aluno.active !== false);
       setAlunos(alunosData);
     } catch (error) {
       console.error('Erro ao buscar alunos:', error);
@@ -258,7 +259,8 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
           <button className="close-button" onClick={handleClose}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={handleSubmit} className="modal-form-wrapper">
+          <div className="modal-form-scroll">
           {/* Tipo e Horas */}
           <div className="form-section">
             <div className="section-header">
@@ -476,6 +478,7 @@ const EditarAulaModal = ({ aula, instrutor, onClose, onSuccess }) => {
               {error}
             </div>
           )}
+          </div>
 
           <div className="modal-actions">
             <button type="button" className="cancel-button" onClick={handleClose}>

@@ -20,9 +20,30 @@
   width: 70vw !important;
   max-width: none !important;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
   display: flex;
   flex-direction: column;
+}
+
+/* Modal Form Wrapper (flex column: scrollable content + fixed footer) */
+.modal-form-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scrollable form content */
+.modal-form-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
 }
 
 /* Modal Header */
@@ -101,15 +122,7 @@
   transform: scale(1.1);
 }
 
-/* Modal Form */
-.modal-form {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
+/* Legacy .modal-form fallback (unused, kept for safety) */
 
 /* Form Sections */
 .form-section {
@@ -345,14 +358,35 @@
   text-align: center;
 }
 
-/* Modal Actions */
+.conflitos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+  text-align: left;
+}
+
+.conflitos-list li {
+  padding: 0.4rem 0.6rem;
+  margin-top: 0.3rem;
+  background-color: rgba(220, 38, 38, 0.08);
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.conflitos-list li::before {
+  content: "- ";
+}
+
+/* Modal Actions (fixed footer, never scrolls) */
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-top: 2px solid var(--blue-200);
+  background: var(--white);
+  flex-shrink: 0;
 }
 
 .cancel-button {
@@ -416,7 +450,7 @@
     font-size: var(--font-size-base);
   }
   
-  .modal-form {
+  .modal-form-scroll {
     padding: var(--space-3);
     gap: var(--space-3);
   }

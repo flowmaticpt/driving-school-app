@@ -132,19 +132,26 @@
   font-size: 0.85rem;
 }
 
+.template-file {
+  color: #95a5a6;
+  font-size: 0.8rem;
+}
+
 .preview-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 400px;
+  gap: 0.75rem;
 }
 
-.pdf-preview-iframe {
-  width: 100%;
-  flex: 1;
-  min-height: 500px;
-  border: 1px solid #ecf0f1;
+.preview-notice {
+  background-color: #e8f4fd;
+  border: 1px solid #bee5eb;
   border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #0c5460;
 }
 
 .text-preview {
@@ -223,9 +230,5 @@
   .gerar-contrato-modal {
     width: 95% !important;
     max-height: 95vh;
-  }
-
-  .pdf-preview-iframe {
-    min-height: 300px;
   }
 }

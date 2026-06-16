@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './VerFichaVeiculoModal.css';
 
@@ -93,7 +93,7 @@ const VerFichaVeiculoModal = ({ veiculo, escolaId, onClose, onSuccess }) => {
         insuranceExpiry: formData.insuranceExpiry ? new Date(formData.insuranceExpiry) : null,
         inspectionExpiry: formData.inspectionExpiry ? new Date(formData.inspectionExpiry) : null,
         notes: formData.notes.trim(),
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       };
 
       const veiculoRef = doc(db, 'schools', escolaId, 'fleet', veiculo.id);

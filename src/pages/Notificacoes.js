@@ -14,12 +14,10 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { useAuth } from '../contexts/AuthContext';
 import './Notificacoes.css';
 
 const Notificacoes = () => {
   const navigate = useNavigate();
-  const { userData } = useAuth();
   const [activeTab, setActiveTab] = useState('notifications'); // notifications, alerts
   const [notifications, setNotifications] = useState([]);
   const [alertRules, setAlertRules] = useState([]);
@@ -46,6 +44,7 @@ const Notificacoes = () => {
     fetchNotifications();
     fetchAlertRules();
     fetchSchools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchNotifications = async () => {

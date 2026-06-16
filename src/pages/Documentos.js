@@ -21,7 +21,6 @@ const Documentos = () => {
   const { userData } = useAuth();
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +42,7 @@ const Documentos = () => {
 
   useEffect(() => {
     fetchDocumentos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchDocumentos = async () => {
@@ -70,7 +70,6 @@ const Documentos = () => {
       setDocumentos(documentosList);
     } catch (error) {
       console.error('Erro ao buscar documentos:', error);
-      setError('Erro ao carregar documentos');
       showMessage('error', 'Erro ao carregar documentos');
     } finally {
       setLoading(false);

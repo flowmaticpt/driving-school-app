@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './PaymentModal.css';
 
 const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAtivos, materiaisComprados }) => {
+  const { userData } = useAuth();
   const [formData, setFormData] = useState({
     amount: '',
     paymentMethod: 'dinheiro',
@@ -47,13 +49,15 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAti
         value: valor, // Valor positivo para pagamentos
         quantity: 1,
         paymentMethod: metodoPagamento,
-        date: new Date(), // Sempre usar data/hora atual para pagamentos efetivos
+        date: serverTimestamp(), // Sempre usar data/hora atual para pagamentos efetivos
         typeOperacao: tipo,
         alunoId: aluno.id,
         alunoName: aluno.name,
         observations: observacoes,
         naoAfetarFinanceiro: naoAfetarFinanceiro, // Usar o estado do checkbox
-        createdAt: new Date()
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null,
+        createdAt: serverTimestamp()
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
@@ -153,7 +157,7 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAti
         metodo: formData.paymentType === 'pronto' ? formData.paymentMethod : null, // Para compatibilidade
         type: formData.paymentType,
         data: serverTimestamp(),
-        date: new Date(), // Para compatibilidade
+        date: serverTimestamp(), // Para compatibilidade
         dataMaximaPagamento: formData.paymentType === 'prestacao' ? new Date(formData.dataMaximaPagamento) : null,
         observations: formData.observations || '',
         observacoes: formData.observations || '', // Para compatibilidade
@@ -172,18 +176,18 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAti
         method: formData.paymentType === 'pronto' ? formData.paymentMethod : null,
         metodo: formData.paymentType === 'pronto' ? formData.paymentMethod : null, // Para compatibilidade
         type: formData.paymentType,
-        data: new Date(),
-        date: new Date(), // Para compatibilidade
+        data: serverTimestamp(),
+        date: serverTimestamp(), // Para compatibilidade
         dataMaximaPagamento: formData.paymentType === 'prestacao' ? new Date(formData.dataMaximaPagamento) : null,
         observations: formData.observations || '',
         observacoes: formData.observations || '', // Para compatibilidade
         isPago: formData.paymentType === 'pronto', // Se for pronto, já está pago
         movimentoId: movimentoId // Ligação ao movimento
       };
-      
+
       await updateDoc(alunoRef, {
         pagamentos: [...pagamentosAtuais, novoPagamento],
-        updatedAt: Timestamp.now()
+        updatedAt: serverTimestamp()
       });
 
       setSuccess('Pagamento registado com sucesso!');
@@ -237,7 +241,7 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, aluno, escolaId, servicosAti
           {/* Informações do Aluno */}
           <div className="payment-student-info">
             <div className="payment-student-name">{aluno?.name}</div>
-            <div className="payment-student-number">#{aluno?.studentNumber}</div>
+            <div className="payment-student-number">#{aluno?.enrollmentNumber}</div>
           </div>
 
           {/* Resumo de Dívida */}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
+import { useParams } from 'react-router-dom';
+import { collection, getDocs, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
 import AdicionarNovoServicoModal from '../components/AdicionarNovoServicoModal';
 import VerFichaServicoModal from '../components/VerFichaServicoModal';
@@ -10,7 +11,8 @@ import './Servicos.css';
 
 const Servicos = () => {
   const { escolaId } = useParams();
-  const navigate = useNavigate();
+  const { userData } = useAuth();
+  const isOwner = userData?.role === 'dono';
   const [escola, setEscola] = useState(null);
   const [services, setServicos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +71,7 @@ const Servicos = () => {
       };
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const handleOpenModal = () => {
@@ -127,16 +130,6 @@ const Servicos = () => {
     servico.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     servico.price?.toString().includes(searchTerm)
   );
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'Data não disponível';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('pt-PT', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   const formatPrice = (price) => {
     if (!price) return '0,00 €';
@@ -279,12 +272,14 @@ const Servicos = () => {
                         >
                           Ver Detalhes
                         </button>
-                        <button 
+                        {isOwner && (
+                        <button
                           className="btn-remover"
                           onClick={() => handleRemover(servico)}
                         >
                           Remover
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>

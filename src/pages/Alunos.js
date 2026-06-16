@@ -68,9 +68,20 @@ const Alunos = () => {
       const activeStudents = studentsData.filter(student => {
         return student.active !== false; // Default to true if not set
       });
-      
-      // Não precisamos mais criar totalDivida pois sempre calculamos dinamicamente
-      
+
+      // Sort by last modified (updatedAt or createdAt) — most recent first
+      activeStudents.sort((a, b) => {
+        const getTime = (s) => {
+          const t = s.updatedAt || s.createdAt;
+          if (!t) return 0;
+          if (t.toDate) return t.toDate().getTime();
+          if (t.seconds) return t.seconds * 1000;
+          if (t instanceof Date) return t.getTime();
+          return new Date(t).getTime() || 0;
+        };
+        return getTime(b) - getTime(a);
+      });
+
       setAlunos(activeStudents);
     } catch (err) {
       setError('Erro ao carregar alunos');
@@ -89,40 +100,50 @@ const Alunos = () => {
     }
   }, [escolaId]);
 
-  const handleSuccess = async () => {
-    // Só recarregar se realmente necessário (ex: novo aluno adicionado)
-    // Se for apenas atualização, handleAlunoUpdate já atualiza a lista
+  const handleSuccess = async (novoAluno) => {
     setIsModalOpen(false);
-    
-    // Se houver selectedAluno, pode precisar recarregar apenas esse
-    // Mas na maioria dos casos, handleAlunoUpdate já fez a atualização
-    if (selectedAluno) {
-      const alunoAtualizado = students.find(a => a.id === selectedAluno.id);
-      if (alunoAtualizado) {
-        setSelectedAluno(alunoAtualizado);
-      } else {
-        // Se não encontrou, pode ser um novo aluno - recarregar lista
-        await fetchAlunos();
-      }
+
+    // Se recebemos o aluno criado, adicioná-lo à lista imediatamente (otimista)
+    if (novoAluno && novoAluno.id) {
+      setAlunos(prev => sortByLastModified([novoAluno, ...prev]));
     }
+
+    // Re-fetch em background para sincronização completa com Firebase
+    // Pequeno delay para garantir que o Firestore propagou o documento
+    setTimeout(async () => {
+      await fetchAlunos();
+    }, 500);
+  };
+
+  const sortByLastModified = (list) => {
+    return [...list].sort((a, b) => {
+      const getTime = (s) => {
+        const t = s.updatedAt || s.createdAt;
+        if (!t) return 0;
+        if (t.toDate) return t.toDate().getTime();
+        if (t.seconds) return t.seconds * 1000;
+        if (t instanceof Date) return t.getTime();
+        return new Date(t).getTime() || 0;
+      };
+      return getTime(b) - getTime(a);
+    });
   };
 
   const handleAlunoUpdate = (alunoAtualizado) => {
     // Criar um novo objeto para garantir que o React detecte a mudança
     const novoAluno = { ...alunoAtualizado };
-    
+
     // Atualizar o selectedAluno quando o modal fizer alterações
     setSelectedAluno(novoAluno);
-    
-    // Também atualizar na lista de alunos
-    setAlunos(prevAlunos => 
-      prevAlunos.map(aluno => 
-        aluno.id === novoAluno.id ? novoAluno : aluno
+
+    // Atualizar na lista e re-ordenar por último modificado
+    setAlunos(prevAlunos =>
+      sortByLastModified(
+        prevAlunos.map(aluno =>
+          aluno.id === novoAluno.id ? novoAluno : aluno
+        )
       )
     );
-    
-    console.log('✅ handleAlunoUpdate: Aluno atualizado no componente pai');
-    console.log('📊 Pagamentos atualizados:', novoAluno.pagamentos?.length || 0);
   };
 
   const calcularDividaAluno = (aluno) => {
@@ -480,6 +501,7 @@ const Alunos = () => {
           onAlunoUpdate={handleAlunoUpdate}
           aluno={selectedAluno}
           escolaId={escolaId}
+          userRole={userData?.role}
         />
       )}
 

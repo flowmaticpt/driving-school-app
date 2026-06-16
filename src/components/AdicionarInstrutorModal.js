@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './AdicionarInstrutorModal.css';
 

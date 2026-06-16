@@ -1,0 +1,335 @@
+.relatorio-instrutores {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.relatorio-instrutores .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  padding-top: 72px;
+}
+
+.ri-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  margin-bottom: 1rem;
+}
+
+.ri-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.ri-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Cards */
+.relatorio-instrutores .cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ri-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #007bff;
+}
+
+.ri-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.ri-card .card-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.ri-card .card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.ri-card.total-instrutores { border-left-color: #6f42c1; }
+.ri-card.total-instrutores .card-value { color: #6f42c1; }
+.ri-card.total-aulas { border-left-color: #007bff; }
+.ri-card.total-aulas .card-value { color: #007bff; }
+.ri-card.total-horas { border-left-color: #28a745; }
+.ri-card.total-horas .card-value { color: #28a745; }
+.ri-card.total-alunos { border-left-color: #fd7e14; }
+.ri-card.total-alunos .card-value { color: #fd7e14; }
+
+/* Report section */
+.instrutores-report {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.instrutores-report h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.25rem 0;
+}
+
+.instrutores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Instructor card */
+.instrutor-report-card {
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.instrutor-report-card:hover {
+  border-color: #007bff;
+}
+
+.instrutor-report-card.alerta {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.instrutor-report-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  gap: 1.5rem;
+}
+
+.instrutor-report-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.instrutor-report-info h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.15rem 0;
+}
+
+.instrutor-email {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.instrutor-report-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alerta-badge {
+  background: #dc3545;
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+/* Detail section */
+.instrutor-report-detail {
+  border-top: 2px solid #e9ecef;
+  padding: 1.25rem;
+  background: #f8f9fa;
+}
+
+.detail-section {
+  margin-bottom: 1.25rem;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-section h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #495057;
+  margin: 0 0 0.75rem 0;
+}
+
+.alunos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.aluno-chip {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 0.3rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Aulas table */
+.aulas-table {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.aulas-table-header,
+.aulas-table-row {
+  display: grid;
+  grid-template-columns: 100px 70px 90px 80px 1fr;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.aulas-table-header {
+  background: #e9ecef;
+  font-weight: 700;
+  color: #495057;
+}
+
+.aulas-table-row {
+  background: white;
+  border-top: 1px solid #f1f3f5;
+}
+
+.aulas-table-row:hover {
+  background: #f8f9fa;
+}
+
+.tipo-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tipo-badge.teorica {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.tipo-badge.pratica {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Empty & loading */
+.relatorio-instrutores .empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.relatorio-instrutores .loading-container,
+.relatorio-instrutores .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #6c757d;
+  text-align: center;
+  padding-top: 72px;
+}
+
+.relatorio-instrutores .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: ri-spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes ri-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .relatorio-instrutores .cards-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .instrutor-report-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .instrutor-report-stats {
+    width: 100%;
+  }
+
+  .aulas-table-header,
+  .aulas-table-row {
+    grid-template-columns: 80px 60px 75px 70px 1fr;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .relatorio-instrutores .cards-container {
+    grid-template-columns: 1fr;
+  }
+}

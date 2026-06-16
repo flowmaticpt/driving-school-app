@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './AdicionarVeiculoModal.css';
 
@@ -58,8 +58,8 @@ const AdicionarVeiculoModal = ({ escolaId, onClose, onSuccess }) => {
         insuranceExpiry: formData.insuranceExpiry || '',
         inspectionExpiry: formData.inspectionExpiry || '',
         notes: formData.notes.trim(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       };
 
       const vehiclesRef = collection(db, 'schools', escolaId, 'fleet');

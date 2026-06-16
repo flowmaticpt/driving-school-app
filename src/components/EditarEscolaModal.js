@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, updateDoc, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './EditarEscolaModal.css';
 
@@ -27,6 +27,7 @@ const EditarEscolaModal = ({ isOpen, onClose, escola, onSuccess }) => {
       });
       fetchAdmins();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escola]);
 
   const fetchAdmins = async () => {
@@ -132,7 +133,7 @@ const EditarEscolaModal = ({ isOpen, onClose, escola, onSuccess }) => {
         address: formData.address.trim() || '',
         number: formData.phone.trim() || '',
         email: formData.email.trim() || '',
-        updatedAt: new Date()
+        updatedAt: Timestamp.now()
       };
 
       await updateDoc(escolaRef, updatedData);

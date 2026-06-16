@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import AdicionarMaterialModal from '../components/AdicionarMaterialModal';
@@ -98,6 +98,7 @@ const Inventario = () => {
       };
       loadData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const handleSuccess = async () => {

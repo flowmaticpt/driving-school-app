@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Navigation from '../components/Navigation';
 import AdicionarInstrutorModal from '../components/AdicionarInstrutorModal';
@@ -73,6 +73,7 @@ const Funcionarios = () => {
       };
       loadData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escolaId]);
 
   const handleSuccess = async () => {

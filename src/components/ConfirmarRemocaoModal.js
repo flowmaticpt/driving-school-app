@@ -13,19 +13,23 @@ const ConfirmarRemocaoModal = ({ isOpen, onClose, escola, onSuccess }) => {
     setError('');
 
     try {
-      // 1. Primeiro, limpar referências da escola em grupos
-      await cleanupReferences('escola', escola.id);
-      
-      // 2. Depois, remover o documento da escola
-      const escolaRef = doc(db, 'escolas', escola.id);
+      // 1. Tentar limpar referências (não bloqueia o delete se falhar)
+      try {
+        await cleanupReferences('escola', escola.id);
+      } catch (cleanupErr) {
+        console.warn('Aviso: erro ao limpar referências, mas a escola será removida:', cleanupErr);
+      }
+
+      // 2. Remover o documento da escola
+      const escolaRef = doc(db, 'schools', escola.id);
       await deleteDoc(escolaRef);
-      
+
       onSuccess('Escola removida com sucesso!');
       onClose();
-      
+
     } catch (err) {
       console.error('Erro ao remover escola:', err);
-      setError('Erro ao remover escola. Tente novamente.');
+      setError(`Erro ao remover escola: ${err.code === 'permission-denied' ? 'Sem permissão. Verifique se é o dono.' : 'Tente novamente.'}`);
     } finally {
       setIsLoading(false);
     }

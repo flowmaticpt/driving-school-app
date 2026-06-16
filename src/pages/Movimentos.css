@@ -429,3 +429,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Created by badge */
+.created-by-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background-color: #f0f4f8;
+  border-radius: 12px;
+  font-size: 0.8em;
+  color: #556;
+  white-space: nowrap;
+}

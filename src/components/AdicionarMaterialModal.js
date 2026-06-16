@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import './AdicionarMaterialModal.css';
 
 const AdicionarMaterialModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
+  const { userData } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -34,10 +36,12 @@ const AdicionarMaterialModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
         value: -value, // Valor negativo para despesas
         quantity: quantity,
         paymentMethod: paymentMethod,
-        date: new Date(),
+        date: serverTimestamp(),
         typeOperacao: 'criacao', // Para distinguir de compras de alunos
         materialId: materialId, // Ligação ao material
-        createdAt: new Date()
+        createdAt: serverTimestamp(),
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null
       };
 
       const movimentoRef = await addDoc(movementsRef, movimento);
@@ -60,10 +64,12 @@ const AdicionarMaterialModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
         fornecedor: null,
         observations: `Quantidade: ${materialData.quantity}x | Preço unitário: ${materialData.price}€`,
         paymentMethod: paymentMethod,
-        date: new Date(),
+        date: serverTimestamp(),
         materialId: materialData.id, // Ligação ao material
         movimentoId: movimentoId, // Ligação ao movimento
-        createdAt: new Date()
+        createdAt: serverTimestamp(),
+        createdBy: userData?.name || 'Desconhecido',
+        createdByUserId: userData?.id || null
       };
 
       const despesaRef = await addDoc(despesasRef, despesaData);
@@ -115,7 +121,7 @@ const AdicionarMaterialModal = ({ isOpen, onClose, onSuccess, escolaId }) => {
           date: new Date(),
           type: 'criacao'
         }],
-        createdAt: new Date()
+        createdAt: serverTimestamp()
       };
 
       const materialRef = await addDoc(materialsRef, materialData);

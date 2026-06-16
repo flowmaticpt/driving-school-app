@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, where, doc, getDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import Navigation from '../components/Navigation';
 import * as XLSX from 'xlsx';
 import './Relatorios.css';
 
@@ -176,21 +175,21 @@ const Relatorios = () => {
     let totalMateriais = 0;
     let totalPagamentos = 0;
 
-    // Calcular total de serviços
-    if (aluno.servicosAtivos) {
-      aluno.servicosAtivos.forEach(servico => {
-        if (servico.ativo) {
-          totalServicos += servico.servicoPrice * servico.quantidade;
-        }
-      });
-    }
+    // Calcular total de serviços (compatibilidade: field pode ser 'services' ou 'servicosAtivos')
+    const servicos = aluno.services || aluno.servicosAtivos || [];
+    servicos.forEach(servico => {
+      const preco = servico.servicoPrice || 0;
+      const qtd = servico.quantity || servico.quantidade || 1;
+      totalServicos += preco * qtd;
+    });
 
-    // Calcular total de materiais
-    if (aluno.materiaisComprados) {
-      aluno.materiaisComprados.forEach(material => {
-        totalMateriais += material.materialPrice * material.quantidade;
-      });
-    }
+    // Calcular total de materiais (compatibilidade: field pode ser 'materials' ou 'materiaisComprados')
+    const materiais = aluno.materials || aluno.materiaisComprados || [];
+    materiais.forEach(material => {
+      const preco = material.materialPrice || 0;
+      const qtd = material.quantity || material.quantidade || 1;
+      totalMateriais += preco * qtd;
+    });
 
     // Calcular total de pagamentos efetuados (apenas pagos)
     if (aluno.pagamentos) {
@@ -206,6 +205,10 @@ const Relatorios = () => {
         // Para prestações, só contar se estiverem pagas
         else if (pagamentoType === 'prestacao' && pagamento.isPago === true) {
           totalPagamentos += pagamento.valorPrestacao || pagamentoValue;
+        }
+        // Prestações não pagas: ignorar
+        else if (pagamentoType === 'prestacao') {
+          // não conta
         }
         // Para outros tipos (compatibilidade), contar o valor
         else {
@@ -271,7 +274,7 @@ const Relatorios = () => {
         const divida = calcularDividaAluno(aluno);
         return {
           'Nome': aluno.name,
-          'Número de Aluno': aluno.numeroAluno || 'N/A',
+          'Número de Inscrição': aluno.enrollmentNumber || 'N/A',
           'Total a Pagar': (divida.totalDivida || 0).toFixed(2) + ' \u20AC',
           'Total Já Pago': (divida.totalPagamentos || 0).toFixed(2) + ' \u20AC',
           'Saldo': (divida.saldo || 0).toFixed(2) + ' \u20AC'
@@ -297,7 +300,7 @@ const Relatorios = () => {
         const data = movimento.date?.toDate ? movimento.date.toDate() : new Date(movimento.date);
         const alunoNumero = (() => {
           const aluno = students.find(a => a.id === movimento.alunoId);
-          return aluno?.enrollmentNumber || aluno?.studentNumber || 'N/A';
+          return aluno?.enrollmentNumber || 'N/A';
         })();
         const naoAfetaFinanceiro = movimento.naoAfetarFinanceiro === true;
         return {
@@ -354,6 +357,58 @@ const Relatorios = () => {
     }
   };
 
+  const exportarRelatorioServicosPorAluno = () => {
+    try {
+      const dados = [];
+
+      students.forEach(aluno => {
+        const divida = calcularDividaAluno(aluno);
+        const servicos = aluno.services || aluno.servicosAtivos || [];
+
+        if (servicos.length === 0) {
+          dados.push({
+            'Aluno': aluno.name || 'N/A',
+            'N. Inscrição': aluno.enrollmentNumber || 'N/A',
+            'Serviço': '(Sem serviços)',
+            'Preço Unitário': '0.00 \u20AC',
+            'Quantidade': 0,
+            'Subtotal': '0.00 \u20AC',
+            'Total Serviços + Materiais': divida.totalDivida.toFixed(2) + ' \u20AC',
+            'Total Pago': divida.totalPagamentos.toFixed(2) + ' \u20AC',
+            'Saldo Devedor': divida.saldo.toFixed(2) + ' \u20AC'
+          });
+          return;
+        }
+
+        servicos.forEach((servico, idx) => {
+          const preco = servico.servicoPrice || 0;
+          const qtd = servico.quantidade || servico.quantity || 1;
+          dados.push({
+            'Aluno': idx === 0 ? (aluno.name || 'N/A') : '',
+            'N. Inscrição': idx === 0 ? (aluno.enrollmentNumber || 'N/A') : '',
+            'Serviço': servico.servicoName || servico.name || 'N/A',
+            'Preço Unitário': preco.toFixed(2) + ' \u20AC',
+            'Quantidade': qtd,
+            'Subtotal': (preco * qtd).toFixed(2) + ' \u20AC',
+            'Total Serviços + Materiais': idx === 0 ? divida.totalDivida.toFixed(2) + ' \u20AC' : '',
+            'Total Pago': idx === 0 ? divida.totalPagamentos.toFixed(2) + ' \u20AC' : '',
+            'Saldo Devedor': idx === 0 ? divida.saldo.toFixed(2) + ' \u20AC' : ''
+          });
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(dados);
+      ws['!cols'] = calcularLargurasColunas(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Serviços por Aluno');
+      const fileName = `Relatorio_ServicosPorAluno_${escola?.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Erro ao exportar relatório de serviços por aluno:', err);
+      alert('Erro ao exportar relatório. Tente novamente.');
+    }
+  };
+
   const exportarRelatorioMateriaisPrestados = () => {
     try {
       const dados = materiaisPrestados.map(r => {
@@ -384,8 +439,7 @@ const Relatorios = () => {
   if (loading) {
     return (
       <div className="relatorios">
-        <Navigation showBackButton={true} backPath={`/escola/${escolaId}`} showUserActions={true} />
-        <div className="container">
+        <div className="relatorios-container">
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Carregando relatórios...</p>
@@ -398,8 +452,7 @@ const Relatorios = () => {
   if (error) {
     return (
       <div className="relatorios">
-        <Navigation showBackButton={true} backPath={`/escola/${escolaId}`} showUserActions={true} />
-        <div className="container">
+        <div className="relatorios-container">
           <div className="error-container">
             <h2>Erro</h2>
             <p>{error}</p>
@@ -412,21 +465,13 @@ const Relatorios = () => {
 
   return (
     <div className="relatorios">
-      <Navigation showBackButton={true} backPath={`/escola/${escolaId}`} showUserActions={true} />
-      
-      <div className="container">
-        <div className="header">
-          <div className="header-content">
-            <div className="header-left">
-              <button className="back-button" onClick={handleVoltar}>
-                ← Voltar
-              </button>
-              <div className="header-text">
-                <h1>Relatórios - {escola?.name}</h1>
-                <p className="subtitle">Exporte dados em formato Excel</p>
-              </div>
-            </div>
-          </div>
+      <div className="relatorios-container">
+        <button className="relatorios-back-button" onClick={handleVoltar}>
+          ← Voltar
+        </button>
+        <div className="relatorios-page-header">
+          <h1>Relatórios - {escola?.name}</h1>
+          <p className="subtitle">Exporte dados em formato Excel</p>
         </div>
 
         {/* Relatório de Alunos */}
@@ -449,6 +494,29 @@ const Relatorios = () => {
           
           <button className="export-button students" onClick={exportarRelatorioAlunos}>
             📥 Exportar Relatório de Alunos
+          </button>
+        </div>
+
+        {/* Relatório de Serviços por Aluno */}
+        <div className="report-section">
+          <div className="report-header">
+            <h2>🧾 Serviços Adquiridos por Aluno</h2>
+            <p>Lista todos os serviços de cada aluno com valores pagos e em dívida</p>
+          </div>
+
+          <div className="report-info">
+            <div className="info-item">
+              <span className="info-label">Total de Alunos:</span>
+              <span className="info-value">{students.length}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Período:</span>
+              <span className="info-value">Todos os tempos</span>
+            </div>
+          </div>
+
+          <button className="export-button students" onClick={exportarRelatorioServicosPorAluno}>
+            📥 Exportar Serviços por Aluno
           </button>
         </div>
 

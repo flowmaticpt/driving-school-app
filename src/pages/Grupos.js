@@ -9,7 +9,7 @@ const Grupos = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [grupoAdded, setGrupoAdded] = useState(0);
-  const { canCreateGroup, userRole } = usePermissions();
+  const { canCreateGroup } = usePermissions();
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

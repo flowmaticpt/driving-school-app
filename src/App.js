@@ -36,6 +36,8 @@ import Configuracoes from './pages/Configuracoes';
 import Notificacoes from './pages/Notificacoes';
 import Documentos from './pages/Documentos';
 import ModelosContrato from './pages/ModelosContrato';
+import RelatorioInstrutores from './pages/RelatorioInstrutores';
+import LimpezaDados from './pages/LimpezaDados';
 
 // Layout component that includes the header for all pages
 const Layout = ({ children }) => {
@@ -339,7 +341,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/relatorios" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="dono">
               <Layout>
                 <Relatorios />
               </Layout>
@@ -384,6 +386,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <ModelosContrato />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/escola/:escolaId/relatorio-instrutores" element={
+            <ProtectedRoute>
+              <Layout>
+                <RelatorioInstrutores />
               </Layout>
             </ProtectedRoute>
           } />
@@ -475,6 +484,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Grupos />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/limpeza-dados" element={
+            <ProtectedRoute requiredRole="dono">
+              <Layout>
+                <LimpezaDados />
               </Layout>
             </ProtectedRoute>
           } />

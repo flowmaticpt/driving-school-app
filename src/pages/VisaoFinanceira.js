@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, where, doc, getDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -22,9 +22,13 @@ const VisaoFinanceira = () => {
     receitas: 0,
     despesas: 0,
     lucroLiquido: 0,
-    banco: 0,
-    dinheiroFisico: 0
+    bancoReceitas: 0,
+    bancoDespesas: 0,
+    dinheiroReceitas: 0,
+    dinheiroDespesas: 0
   });
+
+  const totalAPagarCache = useRef(null);
 
   // Verificar se o utilizador é owner
   const isOwner = userData?.role === 'dono';
@@ -109,8 +113,14 @@ const VisaoFinanceira = () => {
     try {
       setLoading(true);
       
-      // Calcular total a pagar (sempre de todos os tempos)
-      const totalAPagar = await calcularTotalAPagar();
+      // Calcular total a pagar (sempre de todos os tempos) — usar cache se disponível
+      let totalAPagar;
+      if (totalAPagarCache.current !== null) {
+        totalAPagar = totalAPagarCache.current;
+      } else {
+        totalAPagar = await calcularTotalAPagar();
+        totalAPagarCache.current = totalAPagar;
+      }
       
       // Obter período selecionado
       const { inicio, fim } = obterPeriodo();
@@ -121,14 +131,16 @@ const VisaoFinanceira = () => {
           receitas: 0,
           despesas: 0,
           lucroLiquido: 0,
-          banco: 0,
-          dinheiroFisico: 0
+          bancoReceitas: 0,
+          bancoDespesas: 0,
+          dinheiroReceitas: 0,
+          dinheiroDespesas: 0
         });
         return;
       }
 
       // Calcular outros valores baseados no período
-      const { receitas, despesas, banco, dinheiroFisico } = await calcularValoresPeriodo(inicio, fim);
+      const { receitas, despesas, bancoReceitas, bancoDespesas, dinheiroReceitas, dinheiroDespesas } = await calcularValoresPeriodo(inicio, fim);
       const lucroLiquido = receitas - despesas;
 
       setDadosFinanceiros({
@@ -136,8 +148,10 @@ const VisaoFinanceira = () => {
         receitas,
         despesas,
         lucroLiquido,
-        banco,
-        dinheiroFisico
+        bancoReceitas,
+        bancoDespesas,
+        dinheiroReceitas,
+        dinheiroDespesas
       });
     } catch (err) {
       console.error('Erro ao calcular dados financeiros:', err);
@@ -151,7 +165,8 @@ const VisaoFinanceira = () => {
     try {
       // Buscar todos os students
       const studentsRef = collection(db, 'schools', escolaId, 'students');
-      const studentsSnapshot = await getDocs(studentsRef);
+      const studentsQuery = query(studentsRef, limit(1000));
+      const studentsSnapshot = await getDocs(studentsQuery);
       
       let total = 0;
       studentsSnapshot.forEach(doc => {
@@ -224,22 +239,24 @@ const VisaoFinanceira = () => {
       
       let receitas = 0;
       let despesas = 0;
-      let banco = 0;
-      let dinheiroFisico = 0;
+      let bancoReceitas = 0;
+      let bancoDespesas = 0;
+      let dinheiroReceitas = 0;
+      let dinheiroDespesas = 0;
 
       movementsSnapshot.forEach(doc => {
         const movimento = doc.data();
-        
+
         // Ignorar movimentos que não afetam o financeiro
         if (movimento.naoAfetarFinanceiro) {
           return;
         }
-        
+
         // Receitas: pagamentos de students (valor positivo)
         if (movimento.type === 'pagamento' && movimento.value > 0) {
           receitas += movimento.value;
         }
-        
+
         // Despesas: movimentos negativos (criação/reabastecimento de materiais, despesas)
         if (movimento.value < 0) {
           despesas += Math.abs(movimento.value);
@@ -249,41 +266,39 @@ const VisaoFinanceira = () => {
         if (movimento.value > 0) {
           if (movimento.paymentMethod === 'misto') {
             if (movimento.parcelas && movimento.parcelas.length > 0) {
-              // Pagamento misto com parcelas: distribuir cada uma pelo seu método
               movimento.parcelas.forEach(parcela => {
                 const val = parseFloat(parcela.value) || 0;
                 if (parcela.method === 'transferencia' || parcela.method === 'multibanco' || parcela.method === 'mbway') {
-                  banco += val;
+                  bancoReceitas += val;
                 } else if (parcela.method === 'dinheiro') {
-                  dinheiroFisico += val;
+                  dinheiroReceitas += val;
                 }
               });
             } else {
-              // Pagamento misto sem parcelas (dados antigos): contar como banco
-              banco += movimento.value;
+              bancoReceitas += movimento.value;
             }
           } else if (movimento.paymentMethod === 'transferencia' || movimento.paymentMethod === 'multibanco' || movimento.paymentMethod === 'mbway') {
-            banco += movimento.value;
+            bancoReceitas += movimento.value;
           } else if (movimento.paymentMethod === 'dinheiro') {
-            dinheiroFisico += movimento.value;
+            dinheiroReceitas += movimento.value;
           }
         }
 
-        // Despesas: subtrair do método de pagamento correspondente
+        // Despesas: adicionar ao bancoDespesas/dinheiroDespesas
         if (movimento.value < 0) {
           const valorAbs = Math.abs(movimento.value);
           if (movimento.paymentMethod === 'transferencia' || movimento.paymentMethod === 'multibanco' || movimento.paymentMethod === 'mbway') {
-            banco -= valorAbs;
+            bancoDespesas += valorAbs;
           } else if (movimento.paymentMethod === 'dinheiro') {
-            dinheiroFisico -= valorAbs;
+            dinheiroDespesas += valorAbs;
           }
         }
       });
 
-      return { receitas, despesas, banco, dinheiroFisico };
+      return { receitas, despesas, bancoReceitas, bancoDespesas, dinheiroReceitas, dinheiroDespesas };
     } catch (err) {
       console.error('Erro ao calcular valores do período:', err);
-      return { receitas: 0, despesas: 0, banco: 0, dinheiroFisico: 0 };
+      return { receitas: 0, despesas: 0, bancoReceitas: 0, bancoDespesas: 0, dinheiroReceitas: 0, dinheiroDespesas: 0 };
     }
   };
 
@@ -433,6 +448,7 @@ const VisaoFinanceira = () => {
 
         {/* Cards Financeiros */}
         <div className="cards-container">
+          {isOwner && (
           <div className="finance-card total-pagar">
             <div className="card-header">
               <h3>Total a Pagar (De Sempre)</h3>
@@ -443,6 +459,7 @@ const VisaoFinanceira = () => {
             </div>
             <p className="card-description">Dívidas de todos os alunos</p>
           </div>
+          )}
 
           <div className="finance-card receitas">
             <div className="card-header">
@@ -479,13 +496,22 @@ const VisaoFinanceira = () => {
 
           <div className="finance-card banco">
             <div className="card-header">
-              <h3>Banco</h3>
+              <h3>Banco (TRF + MB + MBWay)</h3>
               <span className="card-icon">🏦</span>
             </div>
             <div className="card-value">
-              {formatPrice(dadosFinanceiros.banco)}
+              {formatPrice(dadosFinanceiros.bancoReceitas - dadosFinanceiros.bancoDespesas)}
             </div>
-            <p className="card-description">Transferências + Multibanco + MBWay</p>
+            <div className="card-breakdown">
+              <div className="breakdown-item receita">
+                <span>Receitas:</span>
+                <span>{formatPrice(dadosFinanceiros.bancoReceitas)}</span>
+              </div>
+              <div className="breakdown-item despesa">
+                <span>Despesas:</span>
+                <span>-{formatPrice(dadosFinanceiros.bancoDespesas)}</span>
+              </div>
+            </div>
           </div>
 
           <div className="finance-card dinheiro">
@@ -494,9 +520,18 @@ const VisaoFinanceira = () => {
               <span className="card-icon">💵</span>
             </div>
             <div className="card-value">
-              {formatPrice(dadosFinanceiros.dinheiroFisico)}
+              {formatPrice(dadosFinanceiros.dinheiroReceitas - dadosFinanceiros.dinheiroDespesas)}
             </div>
-            <p className="card-description">Pagamentos em dinheiro</p>
+            <div className="card-breakdown">
+              <div className="breakdown-item receita">
+                <span>Receitas:</span>
+                <span>{formatPrice(dadosFinanceiros.dinheiroReceitas)}</span>
+              </div>
+              <div className="breakdown-item despesa">
+                <span>Despesas:</span>
+                <span>-{formatPrice(dadosFinanceiros.dinheiroDespesas)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

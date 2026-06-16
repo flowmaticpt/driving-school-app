@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  collection, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  setDoc, 
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
   deleteDoc,
   query,
   orderBy,
   limit,
-  where
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import './Backup.css';
@@ -31,6 +31,7 @@ const Backup = () => {
   useEffect(() => {
     fetchBackups();
     checkAutoBackup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBackups = async () => {
@@ -120,125 +121,6 @@ const Backup = () => {
   const showMessage = (type, text) => {
     setMessage({ type, text });
     setTimeout(() => setMessage({ type: '', text: '' }), 5000);
-  };
-
-  const exportAllData = async () => {
-    const allData = {
-      users: [],
-      schools: [],
-      groups: [],
-      backups: []
-    };
-
-    try {
-      // Export Users
-      const usersRef = collection(db, 'users');
-      const usersSnap = await getDocs(usersRef);
-      usersSnap.forEach(doc => {
-        const userData = doc.data();
-        // Convert Firestore Timestamps to ISO strings
-        const processedData = processTimestamps(userData);
-        allData.users.push({ id: doc.id, ...processedData });
-      });
-
-      // Export Schools
-      const schoolsRef = collection(db, 'schools');
-      const schoolsSnap = await getDocs(schoolsRef);
-      
-      for (const schoolDoc of schoolsSnap.docs) {
-        const schoolData = processTimestamps(schoolDoc.data());
-        const schoolId = schoolDoc.id;
-        
-        // Export students
-        const studentsRef = collection(db, 'schools', schoolId, 'students');
-        const studentsSnap = await getDocs(studentsRef);
-        const students = [];
-        studentsSnap.forEach(doc => {
-          students.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-        
-        // Export services
-        const servicesRef = collection(db, 'schools', schoolId, 'services');
-        const servicesSnap = await getDocs(servicesRef);
-        const services = [];
-        servicesSnap.forEach(doc => {
-          services.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export materials
-        const materialsRef = collection(db, 'schools', schoolId, 'materials');
-        const materialsSnap = await getDocs(materialsRef);
-        const materials = [];
-        materialsSnap.forEach(doc => {
-          materials.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export movements
-        const movementsRef = collection(db, 'schools', schoolId, 'movements');
-        const movementsSnap = await getDocs(movementsRef);
-        const movements = [];
-        movementsSnap.forEach(doc => {
-          movements.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export despesas
-        const despesasRef = collection(db, 'schools', schoolId, 'despesas');
-        const despesasSnap = await getDocs(despesasRef);
-        const despesas = [];
-        despesasSnap.forEach(doc => {
-          despesas.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export funcionarios
-        const funcionariosRef = collection(db, 'schools', schoolId, 'funcionarios');
-        const funcionariosSnap = await getDocs(funcionariosRef);
-        const funcionarios = [];
-        funcionariosSnap.forEach(doc => {
-          funcionarios.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export servicosPrestados
-        const servicosPrestadosRef = collection(db, 'schools', schoolId, 'servicosPrestados');
-        const servicosPrestadosSnap = await getDocs(servicosPrestadosRef);
-        const servicosPrestados = [];
-        servicosPrestadosSnap.forEach(doc => {
-          servicosPrestados.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        // Export materiaisPrestados
-        const materiaisPrestadosRef = collection(db, 'schools', schoolId, 'materiaisPrestados');
-        const materiaisPrestadosSnap = await getDocs(materiaisPrestadosRef);
-        const materiaisPrestados = [];
-        materiaisPrestadosSnap.forEach(doc => {
-          materiaisPrestados.push({ id: doc.id, ...processTimestamps(doc.data()) });
-        });
-
-        allData.schools.push({
-          id: schoolId,
-          ...schoolData,
-          students,
-          services,
-          materials,
-          movements,
-          despesas,
-          funcionarios,
-          servicosPrestados,
-          materiaisPrestados
-        });
-      }
-
-      // Export Groups
-      const groupsRef = collection(db, 'groups');
-      const groupsSnap = await getDocs(groupsRef);
-      groupsSnap.forEach(doc => {
-        allData.groups.push({ id: doc.id, ...processTimestamps(doc.data()) });
-      });
-
-      return allData;
-    } catch (error) {
-      console.error('Erro ao exportar dados:', error);
-      throw error;
-    }
   };
 
   const processTimestamps = (obj) => {
@@ -453,13 +335,11 @@ const Backup = () => {
         const chunks = [];
         const chunkSize = maxChunkSize;
         let offset = 0;
-        let chunkIndex = 0;
-        
+
         while (offset < jsonString.length) {
           const chunk = jsonString.substring(offset, offset + chunkSize);
           chunks.push(chunk);
           offset += chunkSize;
-          chunkIndex++;
         }
         
         // Guardar metadados do backup
@@ -729,7 +609,7 @@ const Backup = () => {
       // If restoring from Firestore backup, mark it as used
       if (backupId) {
         const backupRef = doc(db, 'backups', backupId);
-        await setDoc(backupRef, { restoredAt: new Date() }, { merge: true });
+        await setDoc(backupRef, { restoredAt: Timestamp.now() }, { merge: true });
       }
 
       // Step 11: Complete
@@ -974,7 +854,7 @@ const Backup = () => {
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = `backup-${formatDate(backup.createdAt).replace(/[\/\s:]/g, '-')}.txt`; // Changed to .txt since it's encoded
+                        a.download = `backup-${formatDate(backup.createdAt).replace(/[/\s:]/g, '-')}.txt`; // Changed to .txt since it's encoded
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
