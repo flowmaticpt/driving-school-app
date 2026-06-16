@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -102,6 +102,16 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
+  // Instrutor: redirecionar para a escola atribuída
+  useEffect(() => {
+    if (userData?.role === 'instrutor') {
+      const escolaId = userData.escolasAtribuidas?.[0] || userData.schoolId;
+      if (escolaId) {
+        navigate(`/escola/${escolaId}`, { replace: true });
+      }
+    }
+  }, [userData, navigate]);
+
   const handleEscolasGrupos = () => {
     navigate('/configuracoes');
   };
@@ -141,6 +151,16 @@ const HomePage = () => {
   const handleNotificacoes = () => {
     navigate('/notificacoes');
   };
+
+  // Se instrutor, mostrar loading enquanto redireciona
+  if (userData?.role === 'instrutor') {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>A redirecionar para a sua escola...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -278,14 +298,14 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/alunos" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Alunos />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/alunos-antigos" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <AlunosAntigos />
               </Layout>
@@ -299,42 +319,42 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/instrutores" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Instrutores />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/servicos" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Servicos />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/inventario" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Inventario />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/movimentos" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Movimentos />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/despesas" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Despesas />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/visao-financeira" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <VisaoFinanceira />
               </Layout>
@@ -348,21 +368,21 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/suporte" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <SuporteEscola />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/servicos-prestados" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <ServicosPrestados />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/materiais-prestados" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <MateriaisPrestados />
               </Layout>
@@ -376,21 +396,21 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/funcionarios" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <Funcionarios />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/modelos-contrato" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <ModelosContrato />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/escola/:escolaId/relatorio-instrutores" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <Layout>
                 <RelatorioInstrutores />
               </Layout>

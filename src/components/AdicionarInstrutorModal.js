@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { collection, addDoc, getDocs, Timestamp, doc, setDoc } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { db, firebaseConfig } from '../firebase/config';
 import './AdicionarInstrutorModal.css';
 
 const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
@@ -10,6 +12,8 @@ const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
     phone: '',
     carroHabitual: ''
   });
+  const [criarConta, setCriarConta] = useState(false);
+  const [password, setPassword] = useState('');
   const [veiculos, setVeiculos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -53,10 +57,23 @@ const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
     }
 
     // Validar formato do email apenas se fornecido
-    if (formData.email.trim()) {
+    const emailTrimmed = formData.email.trim();
+    if (emailTrimmed) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
+      if (!emailRegex.test(emailTrimmed)) {
         setError('Por favor, insira um email válido');
+        return;
+      }
+    }
+
+    // Se criar conta, email e password são obrigatórios
+    if (criarConta) {
+      if (!emailTrimmed) {
+        setError('O email é obrigatório para criar conta de acesso');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setError('A palavra-passe deve ter pelo menos 6 caracteres');
         return;
       }
     }
@@ -67,7 +84,7 @@ const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
     try {
       const instrutorData = {
         name: formData.name.trim(),
-        email: formData.email.trim() ? formData.email.trim().toLowerCase() : null,
+        email: emailTrimmed ? emailTrimmed.toLowerCase() : null,
         phone: formData.phone.trim() || null,
         carroHabitual: formData.carroHabitual || null,
         role: 'instrutor',
@@ -77,8 +94,55 @@ const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
         updatedAt: Timestamp.now()
       };
 
-      // Adicionar à coleção de utilizadores
+      // Adicionar à coleção de utilizadores (registo interno)
       await addDoc(collection(db, 'utilizadores'), instrutorData);
+
+      // Criar conta de acesso ao sistema (Firebase Auth + users collection)
+      if (criarConta) {
+        let secondaryApp = null;
+        try {
+          // Usar secondary app para não deslogar o admin atual
+          secondaryApp = initializeApp(firebaseConfig, 'SecondaryInstrutor');
+          const secondaryAuth = getAuth(secondaryApp);
+          const userCredential = await createUserWithEmailAndPassword(
+            secondaryAuth,
+            emailTrimmed.toLowerCase(),
+            password
+          );
+
+          // Criar documento na collection 'users'
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            name: formData.name.trim(),
+            email: emailTrimmed.toLowerCase(),
+            role: 'instrutor',
+            phone: formData.phone.trim() || '',
+            schoolId: escolaId,
+            escolasAtribuidas: [escolaId],
+            gruposAtribuidos: [],
+            active: true,
+            pendingApproval: false,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+          });
+
+          await signOut(secondaryAuth);
+        } catch (authError) {
+          console.error('Erro ao criar conta de acesso:', authError);
+          if (authError.code === 'auth/email-already-in-use') {
+            setError('Este email já está registado no sistema. O instrutor foi adicionado mas sem conta de acesso.');
+          } else {
+            setError('Instrutor adicionado, mas erro ao criar conta de acesso: ' + authError.message);
+          }
+          setLoading(false);
+          // O instrutor foi criado na collection 'utilizadores', mas a conta falhou
+          onSuccess();
+          return;
+        } finally {
+          if (secondaryApp) {
+            try { await deleteApp(secondaryApp); } catch (e) { /* ignore */ }
+          }
+        }
+      }
 
       onSuccess();
       onClose();
@@ -153,6 +217,53 @@ const AdicionarInstrutorModal = ({ escolaId, onClose, onSuccess }) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Conta de Acesso */}
+          <div className="form-section">
+            <div className="section-header">
+              <span className="section-icon">🔑</span>
+              <h3>Conta de Acesso</h3>
+            </div>
+
+            <div className="form-group">
+              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={criarConta}
+                  onChange={(e) => setCriarConta(e.target.checked)}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <span>Criar conta para o instrutor aceder ao sistema</span>
+              </label>
+              <p style={{ fontSize: '0.85rem', color: '#7f8c8d', marginTop: '0.25rem' }}>
+                O instrutor podera entrar na app e marcar as suas proprias aulas e ver a frota.
+              </p>
+            </div>
+
+            {criarConta && (
+              <>
+                {!formData.email.trim() && (
+                  <p style={{ color: '#e74c3c', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                    Preencha o email acima para criar a conta.
+                  </p>
+                )}
+                <div className="form-group">
+                  <label htmlFor="password">Palavra-passe *</label>
+                  <input
+                    type="text"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimo 6 caracteres"
+                    className="form-input"
+                  />
+                  <p style={{ fontSize: '0.85rem', color: '#7f8c8d', marginTop: '0.25rem' }}>
+                    Comunique esta palavra-passe ao instrutor. Ele pode altera-la depois.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Veículo Habitual */}

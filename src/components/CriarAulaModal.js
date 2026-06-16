@@ -4,7 +4,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import './CriarAulaModal.css';
 
-const MAX_DURACAO_MINUTOS = 50;
+const MAX_DURACAO_AULA = 50;
 
 const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
   const { userData } = useAuth();
@@ -86,65 +86,87 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
     });
   };
 
-  const verificarConflitos = async () => {
+  // Verificar conflitos para um bloco horário específico
+  const verificarConflitosBloco = (aulasExistentes, inicioMin, fimMin, veiculoId) => {
+    const conflitosEncontrados = [];
+
+    aulasExistentes.forEach(aula => {
+      if (aula.status === 'cancelada') return;
+
+      const [ah, am] = (aula.hora || '00:00').split(':').map(Number);
+      const inicioExistente = ah * 60 + am;
+      const fimExistente = inicioExistente + (parseInt(aula.minutos) || 50);
+
+      // Verificar sobreposição de horário
+      const sobrepoe = inicioMin < fimExistente && fimMin > inicioExistente;
+      if (!sobrepoe) return;
+
+      // Conflito de instrutor
+      if (aula.instrutorId === instrutor.id) {
+        const horaStr = `${String(Math.floor(inicioMin / 60)).padStart(2, '0')}:${String(inicioMin % 60).padStart(2, '0')}`;
+        conflitosEncontrados.push(`Instrutor ${instrutor.name} ja tem aula as ${aula.hora} (conflito com bloco das ${horaStr})`);
+      }
+
+      // Conflito de veiculo
+      if (formData.tipo === 'pratica' && veiculoId && aula.veiculoId === veiculoId) {
+        const veiculo = veiculos.find(v => v.id === veiculoId);
+        conflitosEncontrados.push(`Veiculo ${veiculo?.registration || veiculoId} ja esta em uso as ${aula.hora}`);
+      }
+    });
+
+    return conflitosEncontrados;
+  };
+
+  const verificarConflitos = async (blocos) => {
     if (!formData.data || !formData.hora) return [];
 
-    try {
-      const aulasRef = collection(db, 'aulas');
-      const q = query(aulasRef, where('escolaId', '==', instrutor.escolaId), where('data', '==', formData.data));
-      const snapshot = await getDocs(q);
+    const aulasRef = collection(db, 'aulas');
+    const q = query(aulasRef, where('escolaId', '==', instrutor.escolaId), where('data', '==', formData.data));
+    const snapshot = await getDocs(q);
+    const aulasExistentes = snapshot.docs.map(d => d.data());
 
-      const duracaoMin = parseInt(formData.minutos) || 50;
-      const [h, m] = formData.hora.split(':').map(Number);
-      const inicioNova = h * 60 + m;
-      const fimNova = inicioNova + duracaoMin;
-
-      const conflitosEncontrados = [];
-
-      snapshot.docs.forEach(docSnap => {
-        const aula = docSnap.data();
-        if (aula.status === 'cancelada') return;
-
-        const [ah, am] = (aula.hora || '00:00').split(':').map(Number);
-        const inicioExistente = ah * 60 + am;
-        const fimExistente = inicioExistente + (parseInt(aula.minutos) || 50);
-
-        // Verificar sobreposição de horário
-        const sobrepoe = inicioNova < fimExistente && fimNova > inicioExistente;
-        if (!sobrepoe) return;
-
-        // Conflito de instrutor
-        if (aula.instrutorId === instrutor.id) {
-          conflitosEncontrados.push(`Instrutor ${instrutor.name} ja tem aula as ${aula.hora}`);
-        }
-
-        // Conflito de veiculo
-        if (formData.tipo === 'pratica' && formData.veiculoId && aula.veiculoId === formData.veiculoId) {
-          const veiculo = veiculos.find(v => v.id === formData.veiculoId);
-          conflitosEncontrados.push(`Veiculo ${veiculo?.registration || formData.veiculoId} ja esta em uso as ${aula.hora}`);
-        }
-      });
-
-      return conflitosEncontrados;
-    } catch (err) {
-      console.error('Erro ao verificar conflitos:', err);
-      return [];
+    const todosConflitos = [];
+    for (const bloco of blocos) {
+      const c = verificarConflitosBloco(aulasExistentes, bloco.inicioMin, bloco.fimMin, formData.veiculoId);
+      todosConflitos.push(...c);
     }
+
+    // Remover duplicados
+    return [...new Set(todosConflitos)];
+  };
+
+  // Calcular blocos de aulas (auto-split se >50 min)
+  const calcularBlocos = (duracaoTotal, horaInicio) => {
+    const [h, m] = horaInicio.split(':').map(Number);
+    let minutoAtual = h * 60 + m;
+    const blocos = [];
+    let restante = duracaoTotal;
+
+    while (restante > 0) {
+      const duracao = Math.min(restante, MAX_DURACAO_AULA);
+      const horaBloco = `${String(Math.floor(minutoAtual / 60)).padStart(2, '0')}:${String(minutoAtual % 60).padStart(2, '0')}`;
+      blocos.push({
+        minutos: duracao,
+        hora: horaBloco,
+        inicioMin: minutoAtual,
+        fimMin: minutoAtual + duracao
+      });
+      minutoAtual += duracao;
+      restante -= duracao;
+    }
+
+    return blocos;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.data || !formData.hora) {
-      setError('Data e hora são obrigatórios');
+      setError('Data e hora sao obrigatorios');
       return;
     }
 
     const duracaoMin = parseInt(formData.minutos) || 50;
-    if (duracaoMin > MAX_DURACAO_MINUTOS) {
-      setError(`A duracao maxima por aula e de ${MAX_DURACAO_MINUTOS} minutos.`);
-      return;
-    }
 
     if (duracaoMin < 1) {
       setError('A duracao minima e de 1 minuto.');
@@ -152,7 +174,7 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
     }
 
     if (formData.tipo === 'pratica' && !formData.veiculoId) {
-      setError('Veículo é obrigatório para aulas práticas');
+      setError('Veiculo e obrigatorio para aulas praticas');
       return;
     }
 
@@ -161,86 +183,102 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
       return;
     }
 
+    // Calcular blocos de aulas
+    const blocos = calcularBlocos(duracaoMin, formData.hora);
+
+    // Confirmar se são múltiplas aulas
+    if (blocos.length > 1) {
+      const confirmMsg = `A duracao de ${duracaoMin} minutos sera dividida em ${blocos.length} aulas:\n` +
+        blocos.map((b, i) => `  Aula ${i + 1}: ${b.hora} (${b.minutos} min)`).join('\n') +
+        '\n\nDeseja continuar?';
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
+    }
+
     setLoading(true);
     setError('');
     setConflitos([]);
 
     try {
-      // Verificar conflitos de horário
-      const conflitosEncontrados = await verificarConflitos();
+      // Verificar conflitos de horário para TODOS os blocos
+      const conflitosEncontrados = await verificarConflitos(blocos);
       if (conflitosEncontrados.length > 0) {
         setConflitos(conflitosEncontrados);
-        setError('Foram detetados conflitos de horario. Verifique antes de continuar.');
+        setError('Foram detetados conflitos de horario. Nao e possivel criar a(s) aula(s).');
         setLoading(false);
         return;
       }
-      // Determinar status baseado na data
-      const aulaDateTime = new Date(`${formData.data}T${formData.hora}`);
-      const agora = new Date();
-      const status = aulaDateTime > agora ? 'agendada' : 'realizada';
 
-      const aulaData = {
-        instrutorId: instrutor.id,
-        instrutorNome: instrutor.name,
-        tipo: formData.tipo,
-        minutos: parseInt(formData.minutos) || 60, // Store duration in minutes
-        horas: parseFloat((parseInt(formData.minutos) || 60) / 60).toFixed(2), // Keep for backward compatibility
-        veiculoId: formData.tipo === 'pratica' ? formData.veiculoId : null,
-        data: formData.data,
-        hora: formData.hora,
-        observacoes: formData.observacoes || '',
-        alunos: alunosSelecionados.map(aluno => ({
-          id: aluno.id,
-          nome: aluno.name,
-          numero: aluno.enrollmentNumber
-        })),
-        status: status,
-        escolaId: instrutor.escolaId,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        createdBy: userData?.name || 'Desconhecido',
-        createdByUserId: userData?.id || null
-      };
+      const aulaIds = [];
 
-      // Criar a aula
-      const aulaRef = await addDoc(collection(db, 'aulas'), aulaData);
-      const aulaId = aulaRef.id;
+      // Criar cada bloco como uma aula separada
+      for (const bloco of blocos) {
+        const aulaDateTime = new Date(`${formData.data}T${bloco.hora}`);
+        const agora = new Date();
+        const status = aulaDateTime > agora ? 'agendada' : 'realizada';
 
-      // Adicionar o ID da aula ao array de aulas de cada aluno
+        const aulaData = {
+          instrutorId: instrutor.id,
+          instrutorNome: instrutor.name,
+          tipo: formData.tipo,
+          minutos: bloco.minutos,
+          horas: parseFloat(bloco.minutos / 60).toFixed(2),
+          veiculoId: formData.tipo === 'pratica' ? formData.veiculoId : null,
+          data: formData.data,
+          hora: bloco.hora,
+          observacoes: formData.observacoes || '',
+          alunos: alunosSelecionados.map(aluno => ({
+            id: aluno.id,
+            nome: aluno.name,
+            numero: aluno.enrollmentNumber
+          })),
+          status: status,
+          escolaId: instrutor.escolaId,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          createdBy: userData?.name || 'Desconhecido',
+          createdByUserId: userData?.id || null
+        };
+
+        const aulaRef = await addDoc(collection(db, 'aulas'), aulaData);
+        aulaIds.push(aulaRef.id);
+      }
+
+      // Adicionar os IDs das aulas ao array de aulas de cada aluno
       const updatePromises = alunosSelecionados.map(async (aluno) => {
         try {
           const alunoRef = doc(db, 'schools', instrutor.escolaId, 'students', aluno.id);
-          await updateDoc(alunoRef, {
-            aulas: arrayUnion(aulaId),
-            updatedAt: Timestamp.now()
-          });
+          for (const aulaId of aulaIds) {
+            await updateDoc(alunoRef, {
+              aulas: arrayUnion(aulaId),
+              updatedAt: Timestamp.now()
+            });
+          }
         } catch (error) {
           console.error(`Erro ao atualizar aluno ${aluno.id}:`, error);
-          // Não falha a criação da aula se um aluno não puder ser atualizado
         }
       });
 
-      // Aguardar todas as atualizações dos alunos
       await Promise.all(updatePromises);
 
-      // Adicionar o ID da aula ao array de aulas do instrutor
+      // Adicionar os IDs das aulas ao instrutor
       try {
         const instrutorRef = doc(db, 'utilizadores', instrutor.id);
-        await updateDoc(instrutorRef, {
-          aulas: arrayUnion(aulaId),
-          updatedAt: Timestamp.now()
-        });
+        for (const aulaId of aulaIds) {
+          await updateDoc(instrutorRef, {
+            aulas: arrayUnion(aulaId),
+            updatedAt: Timestamp.now()
+          });
+        }
       } catch (error) {
         console.error('Erro ao atualizar instrutor:', error);
-        // Não falha a criação da aula se o instrutor não puder ser atualizado
       }
 
-      // Mostrar mensagem informativa sobre o status
-      const statusMessage = status === 'agendada' 
-        ? 'Aula agendada com sucesso! (Data futura)' 
-        : 'Aula registada como realizada! (Data passada)';
-      
-      alert(statusMessage);
+      const msg = blocos.length > 1
+        ? `${blocos.length} aulas criadas com sucesso!`
+        : 'Aula criada com sucesso!';
+      alert(msg);
       onSuccess();
       onClose();
     } catch (error) {
@@ -316,7 +354,7 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="minutos">Duração (minutos) *</label>
+                <label htmlFor="minutos">Duracao (minutos) *</label>
                 <input
                   type="number"
                   id="minutos"
@@ -325,15 +363,14 @@ const CriarAulaModal = ({ instrutor, onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   className="form-input"
                   min="1"
-                  max={MAX_DURACAO_MINUTOS}
                   step="1"
-                  placeholder={`Max ${MAX_DURACAO_MINUTOS} min`}
+                  placeholder="Ex: 50, 100, 150"
                   required
                 />
                 <small className="form-hint">
-                  {parseInt(formData.minutos) > MAX_DURACAO_MINUTOS
-                    ? `Maximo ${MAX_DURACAO_MINUTOS} minutos por aula`
-                    : `${formData.minutos} minutos`
+                  {parseInt(formData.minutos) > MAX_DURACAO_AULA
+                    ? `${Math.ceil(parseInt(formData.minutos) / MAX_DURACAO_AULA)} aulas serao criadas (max ${MAX_DURACAO_AULA} min/aula)`
+                    : `${formData.minutos} minutos (1 aula)`
                   }
                 </small>
               </div>

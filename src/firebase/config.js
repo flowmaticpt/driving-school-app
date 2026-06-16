@@ -35,4 +35,7 @@ export const db = getFirestore(app);
 // Initialize Auth
 export const auth = getAuth(app);
 
+// Export config for secondary app (e.g., creating users without logging out admin)
+export { firebaseConfig };
+
 export default app;
