@@ -63,7 +63,28 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
     setGenerating(true);
     try {
       const data = buildPlaceholderData(aluno, escola, extras);
+
+      // Verificar dados do aluno
+      const camposVazios = [];
+      if (!data.nome) camposVazios.push('Nome');
+      if (!data.morada) camposVazios.push('Morada');
+      if (!data.nif) camposVazios.push('NIF');
+      if (!data.cc) camposVazios.push('CC');
+      if (!data.telefone) camposVazios.push('Telefone');
+      if (!data.email) camposVazios.push('Email');
+
+      if (camposVazios.length > 0) {
+        const msg = `Atenção: Os seguintes campos do aluno estão vazios e não vão aparecer no contrato:\n\n- ${camposVazios.join('\n- ')}\n\nPreencha estes dados na ficha do aluno primeiro.`;
+        alert(msg);
+      }
+
+      // Verificar se o template tem placeholders
       const rawText = extractTextFromDocx(template.docxBase64);
+      const temPlaceholders = rawText.includes('{nome}') || rawText.includes('{morada}') || rawText.includes('{nif}');
+      if (!temPlaceholders) {
+        alert('Atenção: Este modelo de contrato não tem codigos como {nome}, {morada}, {nif}. Os dados do aluno não vão aparecer.\n\nEdite o modelo e adicione os codigos nos sitios corretos.');
+      }
+
       const filledText = replacePlaceholders(rawText, data);
       setPreviewText(filledText);
       setStep('preview');
@@ -81,6 +102,7 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
 
     try {
       const data = buildPlaceholderData(aluno, escola, extras);
+      console.log('📄 Dados para contrato:', data);
       const sanitizedName = (aluno?.name || 'aluno').replace(/[^a-zA-Z0-9\u00C0-\u00FF ]/g, '').replace(/\s+/g, '_');
       const fileName = `Contrato_${sanitizedName}.docx`;
       downloadFilledDocx(template.docxBase64, data, fileName);
@@ -123,9 +145,15 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
           ) : step === 'select' ? (
             <>
               <div className="aluno-info-bar">
-                <strong>Aluno:</strong> {aluno?.name || 'N/A'}
-                {aluno?.nif && <span> | NIF: {aluno.nif}</span>}
+                <strong>Aluno:</strong> {aluno?.name || <span style={{color:'#e74c3c'}}>Sem nome</span>}
+                {aluno?.nif ? <span> | NIF: {aluno.nif}</span> : <span style={{color:'#e74c3c'}}> | NIF: vazio</span>}
+                {aluno?.address ? <span> | Morada: {aluno.address.substring(0, 30)}...</span> : <span style={{color:'#e74c3c'}}> | Morada: vazia</span>}
               </div>
+              {(!aluno?.name || !aluno?.nif || !aluno?.address) && (
+                <div style={{padding:'0.5rem 0.75rem', background:'#fff3cd', borderRadius:'6px', fontSize:'0.85rem', color:'#856404', marginBottom:'0.75rem'}}>
+                  Alguns dados do aluno estao vazios. Preencha a ficha do aluno primeiro para que o contrato saia completo.
+                </div>
+              )}
 
               {templates.length === 0 ? (
                 <div className="empty-state">
