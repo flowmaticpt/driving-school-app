@@ -238,10 +238,11 @@ export const textToDocxBase64 = (text) => {
  */
 export const extractPlaceholdersFromDocx = (docxBase64) => {
   const text = extractTextFromDocx(docxBase64);
+  const textLower = text.toLowerCase();
   const found = new Set();
   const allPlaceholders = PLACEHOLDER_GROUPS.flatMap(g => g.placeholders);
   for (const ph of allPlaceholders) {
-    if (text.includes(ph.key)) {
+    if (textLower.includes(ph.key)) {
       found.add(ph.key);
     }
   }
