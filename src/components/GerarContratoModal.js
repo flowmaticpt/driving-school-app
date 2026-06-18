@@ -80,7 +80,8 @@ const GerarContratoModal = ({ isOpen, onClose, aluno, escolaId, extras = {} }) =
 
       // Verificar se o template tem placeholders
       const rawText = extractTextFromDocx(template.docxBase64);
-      const temPlaceholders = rawText.includes('{nome}') || rawText.includes('{morada}') || rawText.includes('{nif}');
+      const rawTextLower = rawText.toLowerCase();
+      const temPlaceholders = rawTextLower.includes('{nome}') || rawTextLower.includes('{morada}') || rawTextLower.includes('{nif}');
       if (!temPlaceholders) {
         alert('Atenção: Este modelo de contrato não tem codigos como {nome}, {morada}, {nif}. Os dados do aluno não vão aparecer.\n\nEdite o modelo e adicione os codigos nos sitios corretos.');
       }

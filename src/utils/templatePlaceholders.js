@@ -125,7 +125,7 @@ export const buildPlaceholderData = (aluno = {}, escola = {}, extras = {}) => {
     }
   }
 
-  return {
+  const baseData = {
     nome: aluno.name || '',
     email: aluno.email || '',
     telefone: aluno.phone || '',
@@ -146,6 +146,16 @@ export const buildPlaceholderData = (aluno = {}, escola = {}, extras = {}) => {
     totalDivida: extras.totalDivida != null ? formatCurrency(extras.totalDivida) : '',
     ...prestacaoData,
   };
+
+  // Adicionar versões MAIÚSCULAS de todas as chaves para que
+  // tanto {nome} como {NOME} funcionem nos templates
+  const withUppercase = {};
+  for (const [key, value] of Object.entries(baseData)) {
+    withUppercase[key] = value;
+    withUppercase[key.toUpperCase()] = value;
+  }
+
+  return withUppercase;
 };
 
 /**
